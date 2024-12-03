@@ -14,4 +14,5 @@ public class IllegalArgumentExceptionDTO {
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime localdatetime;
     private String mensaje;
+    private int status;
 }

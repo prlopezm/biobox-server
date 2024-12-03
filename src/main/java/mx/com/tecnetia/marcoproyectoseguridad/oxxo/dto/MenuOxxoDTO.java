@@ -17,5 +17,6 @@ import java.util.List;
 @Schema(description = "DTO de las opciones de Oxxo.")
 public class MenuOxxoDTO {
     private int puntosRestantes;
+    private String leyenda;
     private List<OpcionCanjeOxxoDTO> opciones;
 }
