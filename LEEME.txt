@@ -1,0 +1,38 @@
+El proyecto tiene incorporado la conexión a una BD definida en Tomcat.
+Se le añadió el dialecto correspondiente a Postgresql, tanto en el archivo de configuración de Hibernate, como en el .properties.
+En el Tomcat se configuraron los archivos server.xml y context.xml para que contuvieran la configuración de la BD.
+Se usaron los enlaces:
+http://tomcat.apache.org/tomcat-9.0-doc/jndi-datasource-examples-howto.html#PostgreSQL
+file:///G:/Mi%20unidad/Docs/Spring/Tomcat%20JNDI%20Datasource/Spring%20Boot%20Configure%20DataSource%20Using%20JNDI%20with%20Example.html
+
+El error de conexión que daba era porque no tenía el dialecto de PostgreSQL puesto.
+Se incluye el Tomcat ya configurado con el JNDI necesario.
+
+Debe copiarse el .jar de jdbc postgresql en la carpeta /lib de tomcat
+
+El server.xml debe contener esto:
+  <GlobalNamingResources>
+    <!-- Editable user database that can also be used by
+         UserDatabaseRealm to authenticate users
+    -->
+    <Resource name="UserDatabase" auth="Container"
+              type="org.apache.catalina.UserDatabase"
+              description="User database that can be updated and saved"
+              factory="org.apache.catalina.users.MemoryUserDatabaseFactory"
+              pathname="conf/tomcat-users.xml" />
+			  
+	<Resource auth="Container" driverClassName="org.postgresql.Driver" 
+                         maxTotal="20" maxIdle="10" maxWaitMillis="-1"
+                         name="jdbc/arquitectura_bd" 
+                         global="jdbc/arquitectura_bd"
+                         password="12345678" 
+                         username="postgres"
+                         type="javax.sql.DataSource" 
+                         url="jdbc:postgresql://127.0.0.1:5432/ARQUITECTURA"/>
+  </GlobalNamingResources>
+ 
+El context.xml debe contener esto:
+<ResourceLink auth="Container" name="jdbc/arquitectura_bd" global="jdbc/arquitectura_bd" type="javax.sql.DataSource" />
+
+En el application.properties de la aplicación debe estar esta línea:
+spring.datasource.jndi-name=java:comp/env/jdbc/arquitectura_bd

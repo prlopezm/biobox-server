@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+   <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <style type="text/css">
+      html, body { margin: 0 0 0 0; padding: 0px 0px 0px 0px; background-color: white; }
+      h4 {  font-family: "Century Gothic", Verdana, Arial; font-size: 24px; line-height: 20px; color: black;  margin-right: 10px;}
+      table {margin-left:auto; margin-right: auto;}
+      td span {font-family: "Century Gothic", Verdana, Arial; font-size: 14px; line-height: 16px; color: black;  margin-left: 10px; margin-right: 10px;}
+      #container  {width: auto; height: auto;}
+   </style>
+   <title>BioBox - Nueva Contraseña</title>
+</head>
+<body>
+   <div id="container">
+         <table  width="700px;" cellspacing="0" cellpadding="0" style="border: 10px solid #dadada; border-radius: 15px;">
+            <tr style="background-color:white;">
+               <td>
+                  <span>
+                        <h4>
+                           BIOBOX
+                        </h4>
+                  </span>            
+               </td>
+               <td colspan="3" align="right" valign="bottom">
+                     <span>
+                        <h4>
+                           NUEVA CONTRASEÑA
+                        </h4>
+                     </span>
+               </td>
+            </tr>
+            <tr>
+               <td colspan="4" style="background-color:#003550; height:20px;"></td>
+            </tr>
+            <tr>
+               <td colspan="4" style="background-color:white; height:50px;">
+                  <span>
+                     Te comparto tu nueva contraseña para entrar a la aplicación de BioBox.
+                  </span>
+               </td>
+            </tr>
+            <tr>
+               <td colspan="4" style="background-color:white; height:25px;">						 
+						 <span th:text="${contrasenia}"></span>
+               </td>            
+            </tr>
+            <tr>
+               <td colspan="4" style="background-color:white; height:50px;">
+                  <span>
+                  </span>
+               </td>            
+            </tr>
+            <tr>
+               <td colspan="4" style="background-color:#9fbb36; height:20px;" align="center"><span style="color:white;"></span></td>
+            </tr>
+         </table>
+   </div>   
+</body>
+</html>

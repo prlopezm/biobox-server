@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+    <title>Firma del NDA para acceso al Data Room.</title>
+</head>
+<body>
+
+<p>Datos del comprador interesado:</p>
+<ul>
+    <li>Nombre: <span th:text="${comprador.nombre}"></span></li>
+    <li>Email: <span th:text="${comprador.email}"></span></li>
+</ul>
+<p>Datos de la propiedad:</p>
+<ul>
+    <li>Nombre: <span th:text="${propiedad.titulo}"></span></li>
+    <li>Dirección: <span th:text="${propiedad.direccion}"></span></li>
+    <li>Precio: <span th:text="${propiedad.unidadValor}"></span>
+        <span th:text="${#numbers.formatCurrency(propiedad.valor)}"></span>
+    </li>
+    <li>Sector general: <span th:text="${propiedad.sectorGeneral}"></span></li>
+    <li>Sector particular: <span th:text="${propiedad.sector}"></span></li>
+</ul>
+<b>Atte. Equipo Buzz.</b>
+</body>
+</html>

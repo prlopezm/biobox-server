@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+    <title>Vendedor interesado en negociar oferta.</title>
+</head>
+<body>
+<p>Datos de la oferta:</p>
+<ul>
+    <li>Folio: <span th:text="${negociarOferta.folioOferta}"></span></li>
+    <li>Monto de la oferta: <span th:text="${negociarOferta.unidadMedidaOferta}"></span>
+        <span th:text="${#numbers.formatCurrency(negociarOferta.montoOferta)}"></span></li>
+    <li>Título de la propiedad: <span th:text="${negociarOferta.tituloPropiedad}"></span></li>
+    <li>Precio de la propiedad: <span th:text="${negociarOferta.unidadMedidaValorPropiedad}"></span>
+        <span th:text="${#numbers.formatCurrency(negociarOferta.montoOferta)}"></span></li>
+</ul>
+<p>Datos del vendedor interesado en negociar oferta:</p>
+<ul>
+    <li>Nombre: <span th:text="${negociarOferta.vendedor}"></span></li>
+    <li>Email: <span th:text="${negociarOferta.emailVendedor}"></span></li>
+    <li>Teléfono: <span th:text="${negociarOferta.telefonoVendedor}"></span></li>
+</ul>
+<p>Datos del comprador:</p>
+<ul>
+    <li>Nombre: <span th:text="${negociarOferta.comprador}"></span></li>
+    <li>Email: <span th:text="${negociarOferta.emailComprador}"></span></li>
+    <li>Teléfono: <span th:text="${negociarOferta.telefonoComprador}"></span></li>
+</ul>
+<b>Atte. Equipo Buzz.</b>
+</body>
+</html>

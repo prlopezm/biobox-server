@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+   <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <style type="text/css">
+      html, body { margin: 0 0 0 0; padding: 0px 0px 0px 0px; background-color: white; }
+      h4 {  font-family: "Century Gothic", Verdana, Arial; font-size: 24px; line-height: 20px; color: black;  margin-right: 10px;}
+      table {margin-left:auto; margin-right: auto;}
+      td span {font-family: "Century Gothic", Verdana, Arial; font-size: 14px; line-height: 16px; color: black;  margin-left: 10px; margin-right: 10px;}
+      #container  {width: auto; height: auto;}
+   </style>
+   <title>BioBox - Codigo de Descuento</title>
+</head>
+<body>
+   <div id="container">
+         <table cellspacing="0" cellpadding="0" style="border: 10px solid #dadada; border-radius: 15px;">
+         
+            <tr style="background-color:white;">
+               <td>
+                  <div style="margin-left: 1em;">
+                  <a href="https://www.biobox.com.mx"><img src="C:/pics/biobox.png" th:src="${logoBioBox}" alt="https://www.biobox.com.mx" style="width: 100px;" /></a>
+                        
+                  </div>            
+               </td>
+               <td colspan="3" align="right" valign="bottom">
+                     <div style="text-align: right; margin-right:1em">
+                        <p style="font-weight: bold;">
+                           Informaci&oacute;n para hacer v&aacute;lido tu beneficio
+                        </p>
+                     </div>
+               </td>
+            </tr>
+            
+            <tr>
+               <td colspan="4">
+               		<div style="background-color:#003550; height:20px;"></div>
+               </td>
+            </tr>
+            
+            <tr>   
+               <td colspan="4" style="background-color:white;"> 
+                   <div style="margin-left: 3em; width:80%; ">
+	                   	<p th:text="'El c&oacute;digo podr&aacute; ser canjeado por un descuento de '
+	                   				+ ${descuento}
+	                   	            + ' sobre el total de la compra realizada en la p&aacute;gina oficial de ' 
+	                   	            + ${nombreCategoria} + '&#174 :'"
+	                   	/>
+                  </div>
+               </td>
+            </tr>
+            
+            <tr>         	 
+               <td colspan="4" align="left" style="background-color:white;">                  	
+               		<div style="text-align: center;">               				
+	                   		<a th:href="${urlCategoria}"><img src="C:/pics/bacardi2.png" th:src="${logoCategoria}" th:alt="${urlCategoria}" style="width: 200px;" /></a>
+                  	</div> 
+               </td>
+            </tr>
+            
+            <tr>   
+               <td colspan="4" style="background-color:white;"> 
+	               	<div> 
+	                   	<p style="text-align: center;">
+	                   		<a th:href="${urlCategoria}" th:text="${urlCategoria}">https://tiendaoficial.com</a>
+	                  	</p>
+	                </div>  	
+               </td>
+            </tr>
+            
+            <tr>   
+               <td colspan="4" style="background-color:white;"> 
+	               	<div> 
+	                   	<p style="text-align: center;">
+	                   		C&oacute;digo: <span style="font-size: 30px; background-color: #faebd7;" th:text="${codigoDescuento}">ABCDFG</span>
+	                  	</p>
+	                </div>  	
+               </td>
+            </tr>
+            
+            <tr>
+               <td colspan="4">
+               		<div style="background-color:#9fbb36; height:20px; text-align:center">
+               			<span style="color:white;"></span>
+               		</div>
+               	</td>
+            </tr>
+            
+         </table>
+         
+   </div>   
+</body>
+</html>

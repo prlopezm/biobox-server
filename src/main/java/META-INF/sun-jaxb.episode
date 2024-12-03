@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<bindings xmlns="http://java.sun.com/xml/ns/jaxb" if-exists="true" version="2.1">
+      
+    <!--
+
+Este archivo ha sido generado por Eclipse Implementation of JAXB v2.3.7 
+Visite https://eclipse-ee4j.github.io/jaxb-ri 
+Todas las modificaciones realizadas en este archivo se perderán si se vuelve a compilar el esquema de origen. 
+Generado el: 2023.09.11 a las 08:18:53 PM CST 
+
+  -->
+      
+    <bindings xmlns:tns="http://prontipagos.ws.com" if-exists="true" scd="x-schema::tns">
+            
+        <schemaBindings map="false">
+                  
+            <package name="mx.com.tecnetia.marcoproyectoseguridad.dto.soap"/>
+                
+        </schemaBindings>
+            
+        <bindings if-exists="true" scd="~tns:balanceService">
+                  
+            <class ref="mx.com.tecnetia.marcoproyectoseguridad.dto.soap.BalanceService"/>
+                
+        </bindings>
+            
+        <bindings if-exists="true" scd="~tns:balanceServiceResponse">
+                  
+            <class ref="mx.com.tecnetia.marcoproyectoseguridad.dto.soap.BalanceServiceResponse"/>
+                
+        </bindings>
+            
+        <bindings if-exists="true" scd="~tns:checkStatusService">
+                  
+            <class ref="mx.com.tecnetia.marcoproyectoseguridad.dto.soap.CheckStatusService"/>
+                
+        </bindings>
+            
+        <bindings if-exists="true" scd="~tns:checkStatusServiceResponse">
+                  
+            <class ref="mx.com.tecnetia.marcoproyectoseguridad.dto.soap.CheckStatusServiceResponse"/>
+                
+        </bindings>
+            
+        <bindings if-exists="true" scd="~tns:obtainCatalogProducts">
+                  
+            <class ref="mx.com.tecnetia.marcoproyectoseguridad.dto.soap.ObtainCatalogProducts"/>
+                
+        </bindings>
+            
+        <bindings if-exists="true" scd="~tns:obtainCatalogProductsResponse">
+                  
+            <class ref="mx.com.tecnetia.marcoproyectoseguridad.dto.soap.ObtainCatalogProductsResponse"/>
+                
+        </bindings>
+            
+        <bindings if-exists="true" scd="~tns:sellService">
+                  
+            <class ref="mx.com.tecnetia.marcoproyectoseguridad.dto.soap.SellService"/>
+                
+        </bindings>
+            
+        <bindings if-exists="true" scd="~tns:sellServiceResponse">
+                  
+            <class ref="mx.com.tecnetia.marcoproyectoseguridad.dto.soap.SellServiceResponse"/>
+                
+        </bindings>
+            
+        <bindings if-exists="true" scd="~tns:transactionResponseDto">
+                  
+            <class ref="mx.com.tecnetia.marcoproyectoseguridad.dto.soap.TransactionResponseDto"/>
+                
+        </bindings>
+            
+        <bindings if-exists="true" scd="~tns:responseBalanceTO">
+                  
+            <class ref="mx.com.tecnetia.marcoproyectoseguridad.dto.soap.ResponseBalanceTO"/>
+                
+        </bindings>
+            
+        <bindings if-exists="true" scd="~tns:balanceTO">
+                  
+            <class ref="mx.com.tecnetia.marcoproyectoseguridad.dto.soap.BalanceTO"/>
+                
+        </bindings>
+            
+        <bindings if-exists="true" scd="~tns:errorResponseTO">
+                  
+            <class ref="mx.com.tecnetia.marcoproyectoseguridad.dto.soap.ErrorResponseTO"/>
+                
+        </bindings>
+            
+        <bindings if-exists="true" scd="~tns:responseCatalogProductTO">
+                  
+            <class ref="mx.com.tecnetia.marcoproyectoseguridad.dto.soap.ResponseCatalogProductTO"/>
+                
+        </bindings>
+            
+        <bindings if-exists="true" scd="~tns:productWsTO">
+                  
+            <class ref="mx.com.tecnetia.marcoproyectoseguridad.dto.soap.ProductWsTO"/>
+                
+        </bindings>
+            
+        <bindings if-exists="true" scd="~tns:referencesProductsTO">
+                  
+            <class ref="mx.com.tecnetia.marcoproyectoseguridad.dto.soap.ReferencesProductsTO"/>
+                
+        </bindings>
+            
+        <bindings if-exists="true" scd="~tns:dto">
+                  
+            <class ref="mx.com.tecnetia.marcoproyectoseguridad.dto.soap.Dto"/>
+                
+        </bindings>
+            
+        <bindings if-exists="true" scd="~tns:transactionResponseTO">
+                  
+            <class ref="mx.com.tecnetia.marcoproyectoseguridad.dto.soap.TransactionResponseTO"/>
+                
+        </bindings>
+          
+    </bindings>
+    
+</bindings>

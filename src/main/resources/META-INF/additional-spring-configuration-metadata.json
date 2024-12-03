@@ -1,0 +1,39 @@
+{
+  "properties": [
+    {
+      "name": "tipo_donacion_sangre",
+      "type": "java.lang.String",
+      "description": "Description for tipo_donacion_sangre."
+    },
+    {
+      "name": "email.passw",
+      "type": "java.lang.String",
+      "description": "Password de aplicación para enviar el email usando GMAIL."
+    },
+    {
+      "name": "email.host",
+      "type": "java.lang.String",
+      "description": "Host de GMAIL."
+    },
+    {
+      "name": "email.port",
+      "type": "java.lang.String",
+      "description": "Puerto de GMAIL. 465 para mails comunes, 587 para MIME."
+    },
+    {
+      "name": "email.username",
+      "type": "java.lang.String",
+      "description": "Dirección desde donde se envía el email."
+    },
+    {
+      "name": "email_admin_code",
+      "type": "java.lang.String",
+      "description": "Código de la BD donde están las direcciones de los administradores, para que enviarles emails con solicitudes de campaña de donación."
+    },
+    {
+      "name": "upload.path",
+      "type": "java.lang.String",
+      "description": "Description for upload.path."
+    }
+  ]
+}
