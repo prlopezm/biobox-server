@@ -86,7 +86,7 @@ public class GlobalExceptionsManager extends ResponseEntityExceptionHandler {
         Map<String, Object> body = new LinkedHashMap<>();
         body.put(TIME, LocalDateTime.now());
         body.put(STATUS, 409);
-        body.put(MENSAJE, "Intenta insertar un registro que ya exista en la BD.");
+        body.put(MENSAJE, "Intenta insertar un registro que ya existe en la BD.");
         HttpHeaders headers = new HttpHeaders();
         headers.set(MENSAJE, ex.getLocalizedMessage());
         log.error("DataIntegrityViolationException: {}", ex.getLocalizedMessage() == null ? MSG_GENERICO : ex.getLocalizedMessage());

@@ -75,6 +75,7 @@ public class ReciclajeServiceImpl implements ReciclajeService {
     private final CapacidadEntityRepository capacidadEntityRepository;
     private final MaterialEntityRepository materialEntityRepository;
     private final SubMarcaEntityRepository subMarcaEntityRepository;
+    private final FabricanteEntityRepository fabricanteEntityRepository;
 
     private void enviarMailLlenado(List<QuioscoEntity> quioscos) {
         String begin = "<tr>" +
@@ -273,7 +274,7 @@ public class ReciclajeServiceImpl implements ReciclajeService {
     }
 
     @Override
-    @Transactional(readOnly = false)
+    @Transactional
     public ProductoAReciclarDTO enviarProcesoDeReciclajeEnQuiosco(Long idUsuarioLogeado, String barCode, Long idQuiosco) {
         log.info("Tomando quiosco *********************");
         this.tomarQuiosco(idQuiosco, idUsuarioLogeado);
@@ -291,20 +292,18 @@ public class ReciclajeServiceImpl implements ReciclajeService {
             }
 
             if (tipoQuiosco == TipoPicEnum.ARDUINO.getTipoPic() && productoOptional.isEmpty()) {
-                producto = new ProductoAReciclarDTO();
-                producto.setIdProducto(0L);
-                producto.setNombre("No encontrado");
-                producto.setIdMaterial(0);
+                log.warn("El código de barras {} no está dado de alta en la BD",barCode);
+                reciclajeServiceImpl.enviaEmailSKUNotFound(barCode);
+                var ent = this.guardaNuevoProductoReciclableNOTFOUND(barCode);
+                producto = getProductoAReciclarDTO(ent);
             }
 
+            //TODO: Es probable que esa sección y la anterior puedan unirse.
             if (tipoQuiosco == TipoPicEnum.PLC.getTipoPic() && productoOptional.isEmpty()) {
-                productoOptional = this.productoReciclableEntityRepository.getProductoByBarCode("NOT_FOUND");
-                if (productoOptional.isEmpty()) {
-                    throw new IllegalStateException("La BD contiene un error. Por favor, contacte al soporte técnico de la aplicación, " +
-                            "reporte este error: SKU_NOT_FOUND_" + barCode + " y recibirá 50 puntos BioBox.");
-                }
+                var ent = this.guardaNuevoProductoReciclableNOTFOUND(barCode);
+               //En esta sección, antes buscaba el producto con código de barras NOT_FOUND y usaba ese
                 log.warn("No encontramos el código de barras {} en nuestro catálogo de productos a reciclar.", barCode);
-                producto = productoOptional.get();
+                producto = getProductoAReciclarDTO(ent);
                 //Enviar email con el SKU que no se encontró:
                 reciclajeServiceImpl.enviaEmailSKUNotFound(barCode);
             }
@@ -348,6 +347,14 @@ public class ReciclajeServiceImpl implements ReciclajeService {
         }
 
         return null;
+    }
+
+    private static ProductoAReciclarDTO getProductoAReciclarDTO(@NotNull ProductoReciclableEntity ent) {
+        var producto = new ProductoAReciclarDTO();
+        producto.setIdProducto(ent.getIdProductoReciclable());
+        producto.setNombre(ent.getBarCode());
+        producto.setIdMaterial(ent.getIdMaterial());
+        return producto;
     }
 
     @Async
@@ -439,11 +446,14 @@ public class ReciclajeServiceImpl implements ReciclajeService {
         String label = "";
         Long idProductoReciclado = 0L;
         ProductoRecicladoEntity productoReciclado = null;
-        ProductoReciclableEntity productoReciclable = null;
+        //ProductoReciclableEntity productoReciclable = null;
         byte[] fotoByte = Base64.getDecoder().decode(foto);
 
-        Optional<ProductoReciclableEntity> productoReciclableOpt = this.productoReciclableEntityRepository.findById(idProducto);
-        productoReciclable = productoReciclableOpt.orElseGet(() -> this.guardaNuevoProductoReciclableNOTFOUND(barcode));
+        var productoReciclable = this.productoReciclableEntityRepository.findById(idProducto)
+                .orElseThrow(()-> new IllegalStateException(""));
+        //Antes, cuando era posible que el producto no existiera en la BD, aquí lo guardaba
+        //Cuando el producto no está en la BD. idProductoReciclado=0L. Buscar qué pasa con el algoritmo. Tengo que meterlo en la BD como producto NOT_FOUND
+        //productoReciclable = productoReciclableOpt.orElseGet(() -> this.guardaNuevoProductoReciclableNOTFOUND(barcode));
         label = productoReciclable.getSubMarcaByIdSubMarca().getNombre();
         productoReciclado = this.guardarReciclaje(productoReciclable, idUsuario, idQuiosco, codigoRespuesta, productoValido);
         idProductoReciclado = productoReciclado.getIdProductoReciclado();
@@ -454,7 +464,6 @@ public class ReciclajeServiceImpl implements ReciclajeService {
         fotoProducto.setExitoso(productoValido);
         this.fotoProductoRecicladoEntityRepository.save(fotoProducto);
 
-        //Cuando el producto no está en la BD. idProductoReciclado=0L. Buscar qué pasa con el algoritmo. Tengo que meterlo en la BD como producto NOT_FOUND
         try {
             log.info("Llamando a validaProductoFoto. idProductoReciclado: {}, barcode: {}, label: {}", idProductoReciclado, barcode, label);
             productoValido = this.validaProductoFoto(idProductoReciclado, barcode, label, foto);
@@ -475,18 +484,24 @@ public class ReciclajeServiceImpl implements ReciclajeService {
         }
         var ent = new ProductoReciclableEntity();
         var cap = this.capacidadEntityRepository.findAll().get(0);
-        var mat = this.materialEntityRepository.findAll().get(0);
+        var mat = this.materialEntityRepository.findByNombre("NOT_FOUND")
+                .orElseThrow(()-> new IllegalStateException("No se ha configurado la BD para material NOT_FOUND."));
         var subMarca = this.subMarcaEntityRepository.findByNombre("NOT_FOUND")
                         .orElseThrow(()-> new IllegalStateException("No se ha configurado la BD para sub marcas NOT_FOUND."));
+        var fabricante = this.fabricanteEntityRepository.findByNombre("NOT_FOUND")
+                .orElseThrow(()-> new IllegalStateException("No se ha configurado la BD para fabricante NOT_FOUND."));
+
         ent.setBarCode(barCode)
                 .setCapacidadByIdCapacidad(cap)
                 .setMaterialByIdMaterial(mat)
                 .setPesoMaximo(new BigDecimal(25))
                 .setPesoMinimo(new BigDecimal(50))
                 .setSku(barCode)
-                .setSubMarcaByIdSubMarca(subMarca);
-
-        return this.productoReciclableEntityRepository.save(ent);
+                .setSubMarcaByIdSubMarca(subMarca)
+                .setFabricante(fabricante);
+        ent = this.productoReciclableEntityRepository.save(ent);
+        log.info("Guardando producto reciclable NOT_FOUND automáticamente: {}", ent);
+        return ent;
     }
 
     @Override

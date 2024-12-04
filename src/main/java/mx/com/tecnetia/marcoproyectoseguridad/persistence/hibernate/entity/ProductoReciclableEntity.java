@@ -30,7 +30,7 @@ public class ProductoReciclableEntity {
     @Column(name = "id_sub_marca", insertable = false, updatable = false)
     private Integer idSubMarca;
     @Basic
-    @Column(name = "id_fabricante")
+    @Column(name = "id_fabricante", insertable = false, updatable = false)
     private Integer idFabricante;
     @Basic
     @Column(name = "id_capacidad", insertable = false, updatable = false)
@@ -55,6 +55,10 @@ public class ProductoReciclableEntity {
     @Basic
     @Column(name = "peso_maximo")
     private BigDecimal pesoMaximo;
+
+    @ManyToOne
+    @JoinColumn(name = "id_fabricante", referencedColumnName = "id_fabricante", nullable = false)
+    private FabricanteEntity fabricante;
     
     public ProductoReciclableEntity(Long idProductoReciclable) {
     	this.idProductoReciclable = idProductoReciclable;
