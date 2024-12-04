@@ -298,7 +298,7 @@ public class ReciclajeServiceImpl implements ReciclajeService {
                 producto = getProductoAReciclarDTO(ent);
             }
 
-            //TODO: Es probable que esa sección y la anterior puedan unirse.
+            //TODO: Es probable que esta sección y la anterior puedan unirse.
             if (tipoQuiosco == TipoPicEnum.PLC.getTipoPic() && productoOptional.isEmpty()) {
                 var ent = this.guardaNuevoProductoReciclableNOTFOUND(barCode);
                //En esta sección, antes buscaba el producto con código de barras NOT_FOUND y usaba ese

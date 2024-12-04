@@ -26,6 +26,8 @@ values ('OXXO', 'OXXO_LEYENDA', 'OXXO_LEYENDA', 'Esta es la leyenda de Oxxo', 'E
        ('OXXO', 'OXXO_URL_VALIDA_USUARIO_KEY', 'OXXO_URL_VALIDA_USUARIO_KEY',
         'RC7SNy1qac6Rj6hlFRV0g37xGDfu2ASEB71hMUHe',
         'header x-api-key', true),
+       ('OXXO', 'OXXO_CANJES_MENSUALES', 'OXXO_CANJES_MENSUALES', '100',
+        'Cantidad máxima de puntos canjeables por mes', true),
        ('OXXO', 'OXXO_URL_VALIDA_USUARIO_PARTNER_ID', 'OXXO_URL_VALIDA_USUARIO_PARTNER_ID', 'biobox',
         'header partner-id', true);
 --Valores NOT_FOUND para productos que no se encuentren en la BD:
@@ -37,3 +39,6 @@ insert into sub_marca(nombre, id_marca)
 values('NOT_FOUND',111); --Buscar el ID del insert anterior.
 insert into material( nombre)
 values('NOT_FOUND');
+insert into arq_propiedad(grupo_codigo, codigo, nombre, valor, descripcion, activo)
+values('OXXO', 'OXXO_CANJES_MENSUALES', 'OXXO_CANJES_MENSUALES', '100',
+       'Cantidad máxima de puntos canjeables por mes', true);
