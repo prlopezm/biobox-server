@@ -32,13 +32,19 @@ values ('OXXO', 'OXXO_LEYENDA', 'OXXO_LEYENDA', 'Esta es la leyenda de Oxxo', 'E
         'header partner-id', true);
 --Valores NOT_FOUND para productos que no se encuentren en la BD:
 insert into fabricante(nombre)
-values('NOT_FOUND');
+values ('NOT_FOUND');
 insert into marca(nombre)
-values('NOT_FOUND');
+values ('NOT_FOUND');
 insert into sub_marca(nombre, id_marca)
-values('NOT_FOUND',111); --Buscar el ID del insert anterior.
-insert into material( nombre)
-values('NOT_FOUND');
-insert into arq_propiedad(grupo_codigo, codigo, nombre, valor, descripcion, activo)
-values('OXXO', 'OXXO_CANJES_MENSUALES', 'OXXO_CANJES_MENSUALES', '100',
-       'Cantidad máxima de puntos canjeables por mes', true);
+values ('NOT_FOUND', 111); --Buscar el ID del insert anterior.
+insert into material(nombre)
+values ('NOT_FOUND');
+--------
+CREATE TABLE public.oxxo_member_id
+(
+    id             bigserial   NOT NULL,
+    arq_usuario_id int8     NOT NULL,
+    member_id      varchar(20) NOT NULL,
+    CONSTRAINT oxxo_member_id_pk PRIMARY KEY (id),
+    CONSTRAINT oxxo_member_id_unique UNIQUE (arq_usuario_id)
+);

@@ -13,7 +13,6 @@ import org.hibernate.annotations.ColumnDefault;
 public class OpcionCanjeOxxoEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @ColumnDefault("nextval('opcion_canje_oxxo_id_seq')")
     @Column(name = "id", nullable = false)
     private Integer id;
 

@@ -3,44 +3,13 @@
              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
              xsi:schemaLocation="https://jakarta.ee/xml/ns/persistence https://jakarta.ee/xml/ns/persistence/persistence_3_0.xsd"
              version="3.0">
-    <persistence-unit name="BUZZ_PU">
-
-<!--        <properties>-->
-<!--            <property name="hibernate.connection.url" value="jdbc:postgresql://ec2-18-224-4-227.us-east-2.compute.amazonaws.com:5432/HOSPITALES"/>-->
-<!--            <property name="hibernate.connection.driver_class" value="org.postgresql.Driver"/>-->
-<!--          </properties>-->
+    <persistence-unit name="BIOBOX_PU">
 	    <mapping-file>resources/orm.xml</mapping-file>
-	    <class>mx.com.tecnetia.marcoproyectoseguridad.persistence.hibernate.entity.PlanoPropiedadEntity</class>
-	    <class>mx.com.tecnetia.marcoproyectoseguridad.persistence.hibernate.entity.PropiedadEntity</class>
-		<class>mx.com.tecnetia.marcoproyectoseguridad.persistence.hibernate.entity.SectorPropiedadEntity</class>
-        <class>mx.com.tecnetia.marcoproyectoseguridad.persistence.hibernate.entity.ContratoRentaPropiedadEntity</class>
-        <class>mx.com.tecnetia.marcoproyectoseguridad.persistence.hibernate.entity.InquilinoEntity</class>
-        <class>mx.com.tecnetia.marcoproyectoseguridad.persistence.hibernate.entity.MedidaEntity</class>
-        <class>mx.com.tecnetia.marcoproyectoseguridad.persistence.hibernate.entity.PropiedadConInquilinosEntity</class>
-        <class>mx.com.tecnetia.marcoproyectoseguridad.persistence.hibernate.entity.SistemaUnidadEntity</class>
-        <class>mx.com.tecnetia.marcoproyectoseguridad.persistence.hibernate.entity.TipoContratoEntity</class>
-        <class>mx.com.tecnetia.marcoproyectoseguridad.persistence.hibernate.entity.SectorGeneralEntity</class>
-        <class>mx.com.tecnetia.marcoproyectoseguridad.persistence.hibernate.entity.IntencionFirmaEntity</class>
-        <class>mx.com.tecnetia.marcoproyectoseguridad.persistence.hibernate.entity.OfertaAceptadaEntity</class>
-
         <properties>
-		    <property name="hibernate.connection.url" value="jdbc:postgresql://70.37.64.205:5432/BUZZ"/>
+		    <property name="hibernate.connection.url" value="jdbc:postgresql://18.220.46.166/BIOBOX"/>
 		    <property name="hibernate.connection.driver_class" value="org.postgresql.Driver"/>
 		    <property name="hibernate.connection.username" value="postgres"/>
 		    <property name="hibernate.connection.password" value="g2Y4&amp;779j0e!"/>
 	    </properties>
     </persistence-unit>
-    <persistence-unit name="persistenceUnit">
-        <mapping-file>resources/orm.xml</mapping-file>
-        <class>mx.com.tecnetia.marcoproyectoseguridad.persistence.hibernate.entity.PropiedadEntity</class>
-        <class>mx.com.tecnetia.marcoproyectoseguridad.persistence.hibernate.entity.VisualizacionPropiedadEntity</class>
-        <class>mx.com.tecnetia.marcoproyectoseguridad.persistence.hibernate.entity.EstadisticasPropiedadEntity</class>
-        <properties>
-            <property name="hibernate.connection.url" value="jdbc:postgresql://70.37.64.205:5432/BUZZ"/>
-            <property name="hibernate.connection.driver_class" value="org.postgresql.Driver"/>
-            <property name="hibernate.connection.username" value="postgres"/>
-            <property name="hibernate.connection.password" value="g2Y4&amp;779j0e!"/>
-        </properties>
-    </persistence-unit>
-
 </persistence>

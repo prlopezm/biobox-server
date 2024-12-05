@@ -5,9 +5,9 @@
 <hibernate-configuration>
 	<session-factory>
 		<property name="dialect">
-			org.hibernate.dialect.PostgreSQL10Dialect
+			org.hibernate.dialect.PostgreSQLDialect
 		</property>
-		<property name="connection.url">jdbc:postgresql://70.37.64.205:5432/BUZZ</property>
+		<property name="connection.url">jdbc:postgresql://18.220.46.166:5432/BIOBOX</property>
 		<property name="connection.driver_class">org.postgresql.Driver</property>
 		<property name="connection.username">postgres</property>
 		<property name="connection.password"><![CDATA[g2Y4&779j0e!]]></property>

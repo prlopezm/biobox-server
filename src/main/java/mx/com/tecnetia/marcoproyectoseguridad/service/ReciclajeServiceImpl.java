@@ -624,7 +624,8 @@ public class ReciclajeServiceImpl implements ReciclajeService {
         requestDTO.setLabel(label);
 //        requestDTO.setImageBase64(imageBase64);
         requestDTO.setImageBase64(image);
-        log.info("Enviando al clasificador: {}", requestDTO);
+        log.info("Enviando al clasificado. label: {}, idProductoReciclado: {}, clase: {}, tamaño imagen: {}",
+                requestDTO.getLabel(), requestDTO.getIdProductoReciclado(), requestDTO.getClase(), requestDTO.getImageBase64().length());
 
         try {
             var restTemplate = new RestTemplate();

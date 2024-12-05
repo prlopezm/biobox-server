@@ -15,7 +15,6 @@ import java.time.Instant;
 public class CanjeOxxoEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @ColumnDefault("nextval('canje_oxxo_id_seq')")
     @Column(name = "id", nullable = false)
     private Long id;
 

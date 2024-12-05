@@ -11,9 +11,10 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
-import mx.com.tecnetia.marcoproyectoseguridad.oxxo.dto.MensajeOxxoDTO;
+import mx.com.tecnetia.marcoproyectoseguridad.oxxo.dto.CanjeDTO;
 import mx.com.tecnetia.marcoproyectoseguridad.oxxo.dto.MenuOxxoDTO;
 import mx.com.tecnetia.marcoproyectoseguridad.oxxo.dto.OpcionCanjeOxxoDTO;
+import mx.com.tecnetia.marcoproyectoseguridad.oxxo.service.MenuOxxoService;
 import mx.com.tecnetia.orthogonal.dto.IllegalArgumentExceptionDTO;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -35,6 +36,7 @@ import java.util.Random;
 @RequiredArgsConstructor
 @Tag(name = "Oxxo", description = "Servicios de Oxxo")
 public class OxxoRestController {
+    private final MenuOxxoService oxxoService;
 
     @PreAuthorize("isAuthenticated()")
     @Operation(summary = "P00. Menú de Oxxo.",
@@ -49,11 +51,12 @@ public class OxxoRestController {
     @GetMapping(value = "/menu")
     public ResponseEntity<MenuOxxoDTO> menuOxxo() {
         var ret = this.random(2);
-        if(ret == 0){
+/*        if(ret == 0){
             //Simula usuario no activo en Oxxo:
             throw new IllegalArgumentException("Para acceder a los beneficios Spin, por favor regístrate https://spinpremia.com/");
         }
-        var menu = this.creaMenu();
+        var menu = this.creaMenu();*/
+        var menu = oxxoService.obtenerMenu();
         return new ResponseEntity<>(menu, HttpStatus.OK);
     }
 
@@ -68,7 +71,7 @@ public class OxxoRestController {
                     "hubo un problema con Oxxo", content = @Content(schema =
             @Schema(implementation = IllegalArgumentExceptionDTO.class)))})
     @PostMapping(value = "/canje")
-    public ResponseEntity<String> canjePuntos(@RequestBody @NotNull @Positive Integer puntos) {
+    public ResponseEntity<String> canjePuntos(@RequestBody @NotNull @Valid CanjeDTO canjeDTO) {
         var rnd = this.random(3);
         if (rnd == 0) {//Puntos no alcanzan
             throw new IllegalArgumentException("Has alcanzado el límite mensual de los beneficios Spin. Te invitamos a volver a partir " +
