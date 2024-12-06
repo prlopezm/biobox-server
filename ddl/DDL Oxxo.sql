@@ -56,3 +56,5 @@ CREATE TABLE public.oxxo_member_id
 insert into arq_propiedad(grupo_codigo, codigo, nombre, valor, descripcion, activo)
 values ('OXXO', 'OXXO_URL_CANJE', 'OXXO_URL_CANJE',
         'https://challenger-testing.mioxxo-dev.io/api/v1/campaign/partner/accrual/points', 'URL para canjear puntos', true);
+
+ALTER TABLE public.usuario_puntos_color ADD CONSTRAINT usuario_puntos_color_unique UNIQUE (id_arq_usuario);

@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import mx.com.tecnetia.marcoproyectoseguridad.oxxo.dto.response.ValidacionUsuarioResponseDTO;
 import mx.com.tecnetia.marcoproyectoseguridad.oxxo.persistence.repository.CanjeOxxoEntityRepository;
+import mx.com.tecnetia.marcoproyectoseguridad.persistence.hibernate.repository.UsuarioPuntosColorEntityRepository;
 import mx.com.tecnetia.orthogonal.utils.propiedades.PropiedadComponent;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
@@ -27,6 +28,7 @@ import java.util.Objects;
 class OxxoCommonsService {
     private final PropiedadComponent propiedadComponent;
     private final CanjeOxxoEntityRepository canjeOxxoEntityRepository;
+    private final UsuarioPuntosColorEntityRepository usuarioPuntosColorEntityRepository;
 
     @Value("${OXXO_URL_VALIDA_USUARIO}")
     private String urlValidaUsuarioPropiedad;
@@ -115,6 +117,10 @@ class OxxoCommonsService {
 
     boolean parserErrorOxxo(String error) {
         return error.contains("Member not found");
+    }
+
+    int cantidadPuntosUsuarioFirmado(Long usuarioId) {
+        return this.usuarioPuntosColorEntityRepository.totalPuntosUsuario(usuarioId);
     }
 
     int cantidadCanjesRestantes(Long idUsuarioLogeado) {

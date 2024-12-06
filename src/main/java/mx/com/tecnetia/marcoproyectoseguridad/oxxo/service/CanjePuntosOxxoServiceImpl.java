@@ -1,29 +1,29 @@
 package mx.com.tecnetia.marcoproyectoseguridad.oxxo.service;
 
 import com.google.gson.Gson;
+import jakarta.annotation.Resource;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
-import mx.com.tecnetia.marcoproyectoseguridad.dto.catalogo.MensajeDTO;
 import mx.com.tecnetia.marcoproyectoseguridad.oxxo.dto.canje.CanjeRequest;
 import mx.com.tecnetia.marcoproyectoseguridad.oxxo.dto.canje.CanjeResponseDTO;
 import mx.com.tecnetia.marcoproyectoseguridad.oxxo.persistence.entity.CanjeOxxoEntity;
 import mx.com.tecnetia.marcoproyectoseguridad.oxxo.persistence.entity.OpcionCanjeOxxoEntity;
 import mx.com.tecnetia.marcoproyectoseguridad.oxxo.persistence.repository.CanjeOxxoEntityRepository;
 import mx.com.tecnetia.marcoproyectoseguridad.oxxo.persistence.repository.OpcionCanjeOxxoEntityRepository;
+import mx.com.tecnetia.marcoproyectoseguridad.persistence.hibernate.repository.UsuarioPuntosColorEntityRepository;
 import mx.com.tecnetia.marcoproyectoseguridad.util.Constantes;
-import mx.com.tecnetia.marcoproyectoseguridad.util.FormatosUtil;
 import mx.com.tecnetia.orthogonal.dto.MailDTO;
-import mx.com.tecnetia.orthogonal.persistence.hibernate.entity.ArqUsuarioEntity;
 import mx.com.tecnetia.orthogonal.services.UsuarioService;
-import mx.com.tecnetia.orthogonal.utils.EstatusProcesoEnum;
 import mx.com.tecnetia.orthogonal.utils.email.EmailOperationsThymeleafService;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestClientException;
@@ -33,7 +33,6 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Objects;
-import java.util.Optional;
 
 /**
  * @author Pablo Rafael López Martínez <prlopezm@gmail.com>
@@ -52,6 +51,11 @@ public class CanjePuntosOxxoServiceImpl implements CanjePuntosOxxoService {
     private final OxxoCommonsService oxxoCommonsService;
     private final CanjeOxxoEntityRepository canjeOxxoEntityRepository;
     private final EmailOperationsThymeleafService emailOperationsThymeleafService;
+    private final UsuarioPuntosColorEntityRepository usuarioPuntosColorEntityRepository;
+
+    @Resource
+    @Lazy
+    private CanjePuntosOxxoServiceImpl canjePuntosOxxoServiceImpl;
 
     @Override
     @Transactional
@@ -59,21 +63,27 @@ public class CanjePuntosOxxoServiceImpl implements CanjePuntosOxxoService {
         var usuarioFirmado = this.usuarioService.getUsuarioLogeado();
         var opcionCanje = this.opcionCanjeOxxoEntityRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("No existe la opción de canje especificada."));
-        verificaSiPuedeCanjearPuntos(id, usuarioFirmado.getIdArqUsuario(), opcionCanje.getPuntosCanjear());
+        verificaSiPuedeCanjearPuntos(usuarioFirmado.getIdArqUsuario(), opcionCanje.getPuntosCanjear());
         var ret = oxxoCommonsService.validarUsuario(usuarioFirmado.getTelefono());
         var respuesta = canjearPuntos(usuarioFirmado.getIdArqUsuario(), ret.getData().getMember_id(), opcionCanje);
-        enviarEmail(usuarioFirmado.getEmail(),respuesta.getData().getTicket_id(), respuesta.getData().getTransaction_id().toString());
+        descuentaPuntosCanje(usuarioFirmado.getIdArqUsuario(), opcionCanje.getPuntosCanjear());
+        var baseUrlWithContext = ServletUriComponentsBuilder.fromCurrentContextPath().build().toUriString();
+        var baseUrl = baseUrlWithContext.replace(ServletUriComponentsBuilder.fromCurrentContextPath().build().getPath(), "");
+        canjePuntosOxxoServiceImpl.enviarEmail(usuarioFirmado.getEmail(), respuesta.getData().getTicket_id(), respuesta.getData().getTransaction_id().toString(), baseUrl);
         return "Canje completado con éxito. Recibirás un email con la información.";
     }
 
-    void verificaSiPuedeCanjearPuntos(@NotNull Integer id, @NotNull Long usuarioFirmadoId, @NotNull Integer puntos) {
+    void verificaSiPuedeCanjearPuntos(@NotNull Long usuarioFirmadoId, @NotNull Integer puntos) {
+        if (oxxoCommonsService.cantidadPuntosUsuarioFirmado(usuarioFirmadoId) < puntos) {
+            throw new IllegalArgumentException("Debe obtener más puntos BioBox");
+        }
         if (oxxoCommonsService.cantidadCanjesRestantes(usuarioFirmadoId) < puntos) {
             var msg = this.oxxoCommonsService.propiedadesOxxo()
                     .stream().filter(p -> Objects.equals(p.codigo(), msgErrorCantidadCanjesExcedido))
                     .findFirst()
                     .orElseThrow(() -> new IllegalArgumentException("Error en la BD. Falta mensaje de error por excesos de canjes"))
                     .valor();
-            log.error("El usuario {} excedió la cantidad de canjes mensuales.", id);
+            log.error("El usuario {} excedió la cantidad de canjes mensuales.", usuarioFirmadoId);
             throw new IllegalArgumentException(msg);
         }
     }
@@ -111,30 +121,41 @@ public class CanjePuntosOxxoServiceImpl implements CanjePuntosOxxoService {
         canjeOxxoEntityRepository.save(ent);
     }
 
-    private void enviarEmail(@Email @NotBlank String email,  @NotBlank String ticket,  @NotBlank String transaction) {
-        String baseUrlWithContext = ServletUriComponentsBuilder.fromCurrentContextPath().build().toUriString();
-        String baseUrl = baseUrlWithContext.replace(ServletUriComponentsBuilder.fromCurrentContextPath().build().getPath(),"");
-        log.info("baseUrlWithContext: {}",baseUrlWithContext);
+
+    @Async
+    public void enviarEmail(@Email @NotBlank String email, @NotBlank String ticket, @NotBlank String transaction, String baseUrl) {
+/*        String baseUrlWithContext = ServletUriComponentsBuilder.fromCurrentContextPath().build().toUriString();
+        String baseUrl = baseUrlWithContext.replace(ServletUriComponentsBuilder.fromCurrentContextPath().build().getPath(), "");
+        log.info("baseUrlWithContext: {}", baseUrlWithContext);*/
         String logoBioBox = baseUrl + contextImages + Constantes.LOGO_BIOBOX_EMAIL;
 
         var model = new HashMap<String, Object>();
-        model.put("logoBioBox",logoBioBox);
-        model.put("ticket",ticket);
-        model.put("transaction",transaction);
-        model.put("email",email);
+        model.put("logoBioBox", logoBioBox);
+        model.put("ticket", ticket);
+        model.put("transaction", transaction);
+        model.put("email", email);
 
         var mailDTO = new MailDTO();
         mailDTO.setMailTo(email);
         mailDTO.setMailSubject("BioBox - Canje Spin");
         mailDTO.setModel(model);
 
-        try{
+        try {
             this.emailOperationsThymeleafService.sendEmail(mailDTO, Constantes.PLANTILLA_EMAIL_CANJE_OXXO);
             log.info("Email enviado correctamente");
         } catch (Exception ex) {
             log.error("Ocurrió un error al enviar el email de canje Oxxo: {}", ex.getMessage());
             throw new IllegalStateException("Ocurrió un error al enviar el email de canje Oxxo");
         }
+    }
 
+    private void descuentaPuntosCanje(Long idUsuario, int puntosDescontar) {
+        var usuarioPuntos = this.usuarioPuntosColorEntityRepository.findByIdArqUsuario(idUsuario)
+                .orElseThrow(() -> new IllegalArgumentException("Usted no tiene punto acumulados."));
+        if (usuarioPuntos.getPuntos() < puntosDescontar) {
+            throw new IllegalArgumentException("Sus puntos no son suficientes para el canje.");
+        }
+        usuarioPuntos.setPuntos(usuarioPuntos.getPuntos() - puntosDescontar);
+        this.usuarioPuntosColorEntityRepository.save(usuarioPuntos);
     }
 }

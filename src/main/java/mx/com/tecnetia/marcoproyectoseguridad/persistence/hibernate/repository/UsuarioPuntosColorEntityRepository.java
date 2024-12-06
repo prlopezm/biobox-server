@@ -19,6 +19,13 @@ public interface UsuarioPuntosColorEntityRepository extends JpaRepository<Usuari
             """)
     List<PuntosColorDTO> getDTOByUsuario(@Param("idArqUsuario") Long idArqUsuario);
 
+    @Query("""
+            select  sum(ent.puntos)
+            from UsuarioPuntosColorEntity ent
+                        join ent.colorByIdColor c
+            where ent.idArqUsuario = :idArqUsuario
+            """)
+    Integer totalPuntosUsuario(@Param("idArqUsuario") Long idArqUsuario);
  
     Optional<UsuarioPuntosColorEntity> findByIdArqUsuario(@Param("idArqUsuario") Long idArqUsuario);
     
