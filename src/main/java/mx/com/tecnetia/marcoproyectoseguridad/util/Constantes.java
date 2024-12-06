@@ -18,5 +18,7 @@ public interface Constantes {
 	
 	public static final String PLANTILLA_HTML_LINK_CONFIRMACION_VALIDO = "email-confirmacion-link-valido-thymeleaf.html";
 	public static final String PLANTILLA_HTML_LINK_CONFIRMACION_INVALIDO = "email-confirmacion-link-invalido-thymeleaf.html";
+
+	String PLANTILLA_EMAIL_CANJE_OXXO = "email-canje-oxxo-thymeleaf.html";
 	
 }

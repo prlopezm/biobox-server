@@ -9,11 +9,11 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
 import mx.com.tecnetia.marcoproyectoseguridad.oxxo.dto.CanjeDTO;
 import mx.com.tecnetia.marcoproyectoseguridad.oxxo.dto.MenuOxxoDTO;
 import mx.com.tecnetia.marcoproyectoseguridad.oxxo.dto.OpcionCanjeOxxoDTO;
+import mx.com.tecnetia.marcoproyectoseguridad.oxxo.service.CanjePuntosOxxoService;
 import mx.com.tecnetia.marcoproyectoseguridad.oxxo.service.MenuOxxoService;
 import mx.com.tecnetia.orthogonal.dto.IllegalArgumentExceptionDTO;
 import org.springframework.http.HttpStatus;
@@ -37,6 +37,7 @@ import java.util.Random;
 @Tag(name = "Oxxo", description = "Servicios de Oxxo")
 public class OxxoRestController {
     private final MenuOxxoService oxxoService;
+    private final CanjePuntosOxxoService canjePuntosOxxoService;
 
     @PreAuthorize("isAuthenticated()")
     @Operation(summary = "P00. Menú de Oxxo.",
@@ -50,8 +51,8 @@ public class OxxoRestController {
             @Schema(implementation = IllegalArgumentExceptionDTO.class)))})
     @GetMapping(value = "/menu")
     public ResponseEntity<MenuOxxoDTO> menuOxxo() {
-        var ret = this.random(2);
-/*        if(ret == 0){
+/*        var ret = this.random(2);
+        if(ret == 0){
             //Simula usuario no activo en Oxxo:
             throw new IllegalArgumentException("Para acceder a los beneficios Spin, por favor regístrate https://spinpremia.com/");
         }
@@ -72,7 +73,7 @@ public class OxxoRestController {
             @Schema(implementation = IllegalArgumentExceptionDTO.class)))})
     @PostMapping(value = "/canje")
     public ResponseEntity<String> canjePuntos(@RequestBody @NotNull @Valid CanjeDTO canjeDTO) {
-        var rnd = this.random(3);
+/*        var rnd = this.random(3);
         if (rnd == 0) {//Puntos no alcanzan
             throw new IllegalArgumentException("Has alcanzado el límite mensual de los beneficios Spin. Te invitamos a volver a partir " +
                     "del 1er día del mes siguiente para seguir disfrutando de estos beneficios");
@@ -80,6 +81,9 @@ public class OxxoRestController {
             throw new IllegalArgumentException("Ups, hay un problema con Oxxo, llama a César a ver qué onda!!!");
         }
         return new ResponseEntity<>("Puntos canjeados correctamente. Te enviaremos un email", HttpStatus.OK);
+        */
+        var ret = canjePuntosOxxoService.canjearPuntos(canjeDTO.getId());
+        return new ResponseEntity<>(ret, HttpStatus.OK);
     }
 
     private int random(int max) {

@@ -7,6 +7,7 @@ import lombok.Setter;
 import org.hibernate.annotations.ColumnDefault;
 
 import java.time.Instant;
+import java.time.LocalDateTime;
 
 @Getter
 @Setter
@@ -21,7 +22,7 @@ public class CanjeOxxoEntity {
     @NotNull
     @ColumnDefault("now()")
     @Column(name = "momento", nullable = false)
-    private Instant momento;
+    private LocalDateTime momento;
 
     @NotNull
     @Column(name = "arq_usuario_id", nullable = false)
@@ -37,7 +38,7 @@ public class CanjeOxxoEntity {
     @JoinColumn(name = "opcion_canje_oxxo_id", nullable = false)
     private OpcionCanjeOxxoEntity opcionCanjeOxxo;
 
-    @Column(name = "respuesta_oxxo", length = Integer.MAX_VALUE)
+    @Column(name = "respuesta_oxxo", length = Integer.MAX_VALUE, nullable = false)
     private String respuestaOxxo;
 
 }

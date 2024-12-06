@@ -30,8 +30,8 @@ public class ProntipagosTopUpServiceEndPoint_Service
         URL url = null;
         WebServiceException e = null;
         try {
-            url = new URL("file:/Users/prlopezm/Documents/pgm/prontipagos/ProntipagosEndpoint.wsdl");
-//            url = new URL("file:C:/pics/ProntipagosEndpoint.wsdl");
+//            url = new URL("file:/Users/prlopezm/Documents/pgm/prontipagos/ProntipagosEndpoint.wsdl");
+            url = new URL("file:C:/pics/ProntipagosEndpoint.wsdl");
             //url = new URL("file:/Users/carlosruiz/Documents/Público/ProntipagosEndpoint.wsdl");
         } catch (MalformedURLException ex) {
             e = new WebServiceException(ex);
