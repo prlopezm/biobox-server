@@ -42,7 +42,7 @@
 			<AppenderRef ref="LogToConsole"/>
 			<AppenderRef ref="LogToFile"/>
 		</Logger>
-		<Logger name="org.hibernate.type.descriptor.sql.BasicBinder" level="TRACE" additivity="false">
+		<Logger name="org.hibernate.type.descriptor.sql" level="TRACE" additivity="false">
 			<AppenderRef ref="LogToConsole"/>
 			<AppenderRef ref="LogToFile"/>
 		</Logger>

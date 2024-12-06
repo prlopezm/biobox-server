@@ -2,7 +2,6 @@ package mx.com.tecnetia.marcoproyectoseguridad.oxxo.service;
 
 import com.google.gson.Gson;
 import jakarta.annotation.Resource;
-import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
@@ -14,8 +13,6 @@ import mx.com.tecnetia.marcoproyectoseguridad.oxxo.persistence.entity.OpcionCanj
 import mx.com.tecnetia.marcoproyectoseguridad.oxxo.persistence.repository.CanjeOxxoEntityRepository;
 import mx.com.tecnetia.marcoproyectoseguridad.oxxo.persistence.repository.OpcionCanjeOxxoEntityRepository;
 import mx.com.tecnetia.marcoproyectoseguridad.persistence.hibernate.repository.UsuarioPuntosColorEntityRepository;
-import mx.com.tecnetia.marcoproyectoseguridad.util.Constantes;
-import mx.com.tecnetia.orthogonal.dto.MailDTO;
 import mx.com.tecnetia.orthogonal.services.UsuarioService;
 import mx.com.tecnetia.orthogonal.utils.email.EmailOperationsThymeleafService;
 import org.springframework.beans.factory.annotation.Value;
@@ -23,7 +20,6 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestClientException;
@@ -31,7 +27,6 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.time.LocalDateTime;
-import java.util.HashMap;
 import java.util.Objects;
 
 /**
@@ -44,18 +39,13 @@ import java.util.Objects;
 public class CanjePuntosOxxoServiceImpl implements CanjePuntosOxxoService {
     @Value("${OXXO_LIMITE_EXCEDIDO_ERROR}")
     private String msgErrorCantidadCanjesExcedido;
-    @Value("${server.servlet.context-path-images}")
-    private String contextImages;
+    private final EmailOxxoService emailOxxoService;
     private final UsuarioService usuarioService;
     private final OpcionCanjeOxxoEntityRepository opcionCanjeOxxoEntityRepository;
     private final OxxoCommonsService oxxoCommonsService;
     private final CanjeOxxoEntityRepository canjeOxxoEntityRepository;
     private final EmailOperationsThymeleafService emailOperationsThymeleafService;
     private final UsuarioPuntosColorEntityRepository usuarioPuntosColorEntityRepository;
-
-    @Resource
-    @Lazy
-    private CanjePuntosOxxoServiceImpl canjePuntosOxxoServiceImpl;
 
     @Override
     @Transactional
@@ -69,8 +59,9 @@ public class CanjePuntosOxxoServiceImpl implements CanjePuntosOxxoService {
         descuentaPuntosCanje(usuarioFirmado.getIdArqUsuario(), opcionCanje.getPuntosCanjear());
         var baseUrlWithContext = ServletUriComponentsBuilder.fromCurrentContextPath().build().toUriString();
         var baseUrl = baseUrlWithContext.replace(ServletUriComponentsBuilder.fromCurrentContextPath().build().getPath(), "");
-        canjePuntosOxxoServiceImpl.enviarEmail(usuarioFirmado.getEmail(), respuesta.getData().getTicket_id(), respuesta.getData().getTransaction_id().toString(), baseUrl);
-        return "Canje completado con éxito. Recibirás un email con la información.";
+        log.info("Enviando email con información del canje de Oxxo");
+        emailOxxoService.enviarEmail(usuarioFirmado.getEmail(), respuesta.getData().getTicket_id(), respuesta.getData().getTransaction_id().toString(), baseUrl);
+        return "Canje completado con éxito. Recibirás un email con la información del canje.";
     }
 
     void verificaSiPuedeCanjearPuntos(@NotNull Long usuarioFirmadoId, @NotNull Integer puntos) {
@@ -121,33 +112,6 @@ public class CanjePuntosOxxoServiceImpl implements CanjePuntosOxxoService {
         canjeOxxoEntityRepository.save(ent);
     }
 
-
-    @Async
-    public void enviarEmail(@Email @NotBlank String email, @NotBlank String ticket, @NotBlank String transaction, String baseUrl) {
-/*        String baseUrlWithContext = ServletUriComponentsBuilder.fromCurrentContextPath().build().toUriString();
-        String baseUrl = baseUrlWithContext.replace(ServletUriComponentsBuilder.fromCurrentContextPath().build().getPath(), "");
-        log.info("baseUrlWithContext: {}", baseUrlWithContext);*/
-        String logoBioBox = baseUrl + contextImages + Constantes.LOGO_BIOBOX_EMAIL;
-
-        var model = new HashMap<String, Object>();
-        model.put("logoBioBox", logoBioBox);
-        model.put("ticket", ticket);
-        model.put("transaction", transaction);
-        model.put("email", email);
-
-        var mailDTO = new MailDTO();
-        mailDTO.setMailTo(email);
-        mailDTO.setMailSubject("BioBox - Canje Spin");
-        mailDTO.setModel(model);
-
-        try {
-            this.emailOperationsThymeleafService.sendEmail(mailDTO, Constantes.PLANTILLA_EMAIL_CANJE_OXXO);
-            log.info("Email enviado correctamente");
-        } catch (Exception ex) {
-            log.error("Ocurrió un error al enviar el email de canje Oxxo: {}", ex.getMessage());
-            throw new IllegalStateException("Ocurrió un error al enviar el email de canje Oxxo");
-        }
-    }
 
     private void descuentaPuntosCanje(Long idUsuario, int puntosDescontar) {
         var usuarioPuntos = this.usuarioPuntosColorEntityRepository.findByIdArqUsuario(idUsuario)

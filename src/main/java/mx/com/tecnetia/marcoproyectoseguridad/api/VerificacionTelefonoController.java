@@ -1,5 +1,6 @@
 package mx.com.tecnetia.marcoproyectoseguridad.api;
 
+import lombok.extern.log4j.Log4j2;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -33,6 +34,7 @@ import mx.com.tecnetia.orthogonal.dto.UnAuthorizedDTO;
 @RequestMapping("/verificacion/telefono")
 @Validated
 @RequiredArgsConstructor
+@Log4j2
 @Tag(name = "Verificación de telefono.", description = "Verificación de telefono del usuario.")
 @ApiResponses(value = {
         @ApiResponse(responseCode = "400", description = "Fallo en el parámetro de entrada.",
@@ -48,7 +50,8 @@ public class VerificacionTelefonoController {
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Operación exitosa.",
             content = @Content(schema = @Schema(implementation = MensajeDTO.class)))})
     @GetMapping(value = "/codigo/envia")
-    public ResponseEntity<MensajeDTO<?>> enviarOTP(@RequestParam("telefono") @NotEmpty String telefono) {		
+    public ResponseEntity<MensajeDTO<?>> enviarOTP(@RequestParam("telefono") @NotEmpty String telefono) {
+        log.info("/codigo/envia. Teléfono a validar: {}", telefono);
 		var mensaje = verificacionTelefonoService.enviarOTPporSMS(telefono);
 		return new ResponseEntity<>(mensaje, HttpStatus.OK);
     }
@@ -60,6 +63,7 @@ public class VerificacionTelefonoController {
             content = @Content(schema = @Schema(implementation = MensajeDTO.class)))})
 	@PostMapping(value = "/codigo/valida")
     public ResponseEntity<MensajeDTO<?>> validarOTP(@RequestBody @Valid VerificacionTelefonoDTO dto) {
+        log.info("/codigo/valida. Código a validar: {}", dto);
 		var mensaje = verificacionTelefonoService.validarOTPporSMS(dto.getTelefono(), dto.getCodigo());
 		return new ResponseEntity<>(mensaje, HttpStatus.OK);
     }

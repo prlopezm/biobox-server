@@ -12,7 +12,6 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class EditaUsuarioArquitecturaDTO {
-	
     @NotBlank(message = "Nombre(s) obligatorio(s).")
     @Size(max = 200, message = "El tamaño máximo del nombre es 200")
     private String nombres;

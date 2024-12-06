@@ -58,3 +58,11 @@ values ('OXXO', 'OXXO_URL_CANJE', 'OXXO_URL_CANJE',
         'https://challenger-testing.mioxxo-dev.io/api/v1/campaign/partner/accrual/points', 'URL para canjear puntos', true);
 
 ALTER TABLE public.usuario_puntos_color ADD CONSTRAINT usuario_puntos_color_unique UNIQUE (id_arq_usuario);
+
+insert into arq_propiedad(grupo_codigo, codigo, nombre, valor, descripcion, activo)
+values ('TWILIO', 'SMS.TWILIO.ACCOUNT-SID', 'SMS.TWILIO.ACCOUNT-SID', 'ACa9909191727d20f59834b91b513f5580',
+        'Cuenta de Twilio', true),
+       ('TWILIO', 'SMS.TWILIO.AUTH-TOKEN', 'SMS.TWILIO.AUTH-TOKEN', '6a34f172d3262b1f35ebf844dc066371',
+        'Token de Twilio', true),
+       ('TWILIO', 'SMS.TWILIO.FROM-NUMBER', 'SMS.TWILIO.FROM-NUMBER', '+15202638223',
+        'Teléfono emisor de Twilio', true);

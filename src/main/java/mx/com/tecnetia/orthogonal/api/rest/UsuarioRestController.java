@@ -126,8 +126,8 @@ public class UsuarioRestController {
             @ApiResponse(responseCode = "200", description = "Operación exitosa.", content = @Content(schema =
             @Schema(implementation = MensajeDTO.class)))})
     @PatchMapping("/usuario/edita")
-    public ResponseEntity<MensajeDTO<?>> editaUsuario(@Valid @RequestBody EditaUsuarioArquitecturaDTO datos) { 
-
+    public ResponseEntity<MensajeDTO<?>> editaUsuario(@Valid @RequestBody EditaUsuarioArquitecturaDTO datos) {
+        log.info("Usuario a editar: {}", datos);
         var mensaje = this.usuarioService.editarUsuario(datos);
         return new ResponseEntity<>(mensaje, HttpStatus.OK);
     }

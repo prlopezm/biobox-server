@@ -15,7 +15,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class CanjeDTO {
-    @NotNull
-    @Positive
+    @NotNull(message = "El ID del canje es obligatorio.")
+    @Positive(message = "El ID del canje debe ser estrictamente positivo.")
     private Integer id;
 }

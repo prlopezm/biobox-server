@@ -39,9 +39,9 @@ public class GlobalExceptionsManager extends ResponseEntityExceptionHandler {
         body.put(STATUS, status.value());
         // Get all errors:
         List<String> errors = ex.getBindingResult().getFieldErrors().stream().map(DefaultMessageSourceResolvable::getDefaultMessage).toList();
-        headers.set(MENSAJE, errors.toString());
-        body.put(MENSAJE, errors.isEmpty() ? MSG_GENERICO : errors);
-        log.error("MethodArgumentNotValidException: {}", errors.isEmpty() ? MSG_GENERICO : errors);
+        var erroresStr =  errors.stream().reduce("", (partialString, element) -> partialString + element);
+        body.put(MENSAJE, erroresStr);
+        log.error("MethodArgumentNotValidException: {}", erroresStr);
         return new ResponseEntity<>(body, headers, status);
     }
 

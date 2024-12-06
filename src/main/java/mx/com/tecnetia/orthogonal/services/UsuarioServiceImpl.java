@@ -289,10 +289,14 @@ public class UsuarioServiceImpl implements UsuarioService {
 
     private MensajeDTO<?> existenIdentificadoresAlEditar(ArqUsuarioEntity usuarioLogeado, String nick, String email, String telefono) {
         var usuarioConIgualEmail = this.arqUsuarioRepository.findByEmail(email);
+        log.info("Usuario con igual email: {}", usuarioConIgualEmail);
         var usuarioConIgualNick = this.arqUsuarioRepository.findByNick(nick);
+        log.info("Usuario con igual nick: {}", usuarioConIgualNick);
         var usuariosConIgualTelefono = this.arqUsuarioRepository.findByTelefonoAllIgnoreCase(telefono);
+        log.info("Usuarios con igual telefono: {}", usuariosConIgualTelefono);
         var listaTelefonosContieneUsuarioLogeado = usuariosConIgualTelefono.stream()
                 .anyMatch(v -> Objects.equals(v.getIdArqCliente(), usuarioLogeado.getIdArqCliente()));
+        log.info("La lista de teléfonos iguales contiene al del usaurio firmado: {}", listaTelefonosContieneUsuarioLogeado);
 
         //Un usuario tiene el email que intentamos poner:
         if (usuarioConIgualEmail.isPresent() &&
