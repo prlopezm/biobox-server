@@ -111,6 +111,7 @@ public class UsuarioServiceImpl implements UsuarioService {
         usuarioEntity.setEmailValidado(false);
         usuarioEntity.setTelefonoValidado(false);
         usuarioEntity.setRegistroConcluido(false);
+        usuarioEntity.setNuevoIngreso(true);
 
         //Valida existencia de usuario
         MensajeDTO<?> mensajeDTO = this.existenIdentificadoresAlCrear(nuevoUsuario.getEmail(), nuevoUsuario.getNick(), nuevoUsuario.getTelefono());
@@ -167,10 +168,8 @@ public class UsuarioServiceImpl implements UsuarioService {
     public MensajeDTO<?> editarUsuario(EditaUsuarioArquitecturaDTO datos) {
         var usuarioLogeado = this.getUsuarioLogeado();
         //Valida existencia de idientificadores
-        MensajeDTO<?> mensajeDTO = this.existenIdentificadoresAlEditar(usuarioLogeado, datos.getNick(), datos.getEmail(), datos.getTelefono());
-        if (Boolean.parseBoolean(mensajeDTO.getEstatus())) {
-            return mensajeDTO;
-        }
+        this.existenIdentificadoresAlEditar(usuarioLogeado, datos.getNick(), datos.getEmail(), datos.getTelefono());
+
         log.info("Editar usuario: {}", datos);
         usuarioLogeado.setNombres(datos.getNombres());
         usuarioLogeado.setApellidoPaterno(datos.getApellidoPaterno());
@@ -277,17 +276,17 @@ public class UsuarioServiceImpl implements UsuarioService {
 
     private MensajeDTO<?> existenIdentificadoresAlCrear(String nick, String email, String telefono) {
         if (this.arqUsuarioRepository.findByEmail(email).isPresent()) {
-            return new MensajeDTO<>(String.valueOf(true), "Esta dirección de correo electrónico ya está en uso. Por favor, pruebe con otra");
+            throw new IllegalArgumentException("Esta dirección de correo electrónico ya está en uso. Por favor, pruebe con otra");
         } else if (this.arqUsuarioRepository.findByNick(nick).isPresent()) {
-            return new MensajeDTO<>(String.valueOf(true), "Este email ya está en uso. Por favor, pruebe con otro");
-        } else if (this.arqUsuarioRepository.findByTelefono(telefono).isPresent()) {
-            return new MensajeDTO<>(String.valueOf(true), "Este número de teléfono ya está en uso. Por favor, pruebe con otro");
+            throw new IllegalArgumentException("Este email ya está en uso. Por favor, pruebe con otro");
+        } else if (!this.arqUsuarioRepository.findByTelefonoAllIgnoreCase(telefono).isEmpty()) {
+            throw new IllegalArgumentException("Este número de teléfono ya está en uso. Por favor, pruebe con otro");
         } else {
             return new MensajeDTO<>(String.valueOf(false), null);
         }
     }
 
-    private MensajeDTO<?> existenIdentificadoresAlEditar(ArqUsuarioEntity usuarioLogeado, String nick, String email, String telefono) {
+    private void existenIdentificadoresAlEditar(ArqUsuarioEntity usuarioLogeado, String nick, String email, String telefono) {
         var usuarioConIgualEmail = this.arqUsuarioRepository.findByEmail(email);
         log.info("Usuario con igual email: {}", usuarioConIgualEmail);
         var usuarioConIgualNick = this.arqUsuarioRepository.findByNick(nick);
@@ -296,23 +295,21 @@ public class UsuarioServiceImpl implements UsuarioService {
         log.info("Usuarios con igual telefono: {}", usuariosConIgualTelefono);
         var listaTelefonosContieneUsuarioLogeado = usuariosConIgualTelefono.stream()
                 .anyMatch(v -> Objects.equals(v.getIdArqCliente(), usuarioLogeado.getIdArqCliente()));
-        log.info("La lista de teléfonos iguales contiene al del usaurio firmado: {}", listaTelefonosContieneUsuarioLogeado);
+        log.info("La lista de teléfonos iguales contiene al del usuario firmado: {}", listaTelefonosContieneUsuarioLogeado);
 
         //Un usuario tiene el email que intentamos poner:
         if (usuarioConIgualEmail.isPresent() &&
                 //Ese usuario es distinto al usuario logeado:
                 !Objects.equals(usuarioLogeado.getIdArqUsuario(), usuarioConIgualEmail.get().getIdArqUsuario())) {
-            return new MensajeDTO<>(String.valueOf(true), "Esta dirección de correo electrónico ya está en uso. Por favor, pruebe con otra");
+            throw new IllegalArgumentException("Esta dirección de correo electrónico ya está en uso. Por favor, pruebe con otra");
             //Un usuario tiene el nick que intentamos poner:
         } else if (usuarioConIgualNick.isPresent() &&
                 //Ese usuario es distinto al usuario logeado:
                 !Objects.equals(usuarioLogeado.getIdArqUsuario(), usuarioConIgualNick.get().getIdArqUsuario())) {
-            return new MensajeDTO<>(String.valueOf(true), "Este alias de usuario ya está en uso. Por favor, pruebe con otro");
+            throw new IllegalArgumentException("Este alias de usuario ya está en uso. Por favor, pruebe con otro");
             //Existe 0 o más de 1 usuario con el teléfono que intentamos poner:
         } else if (usuariosConIgualTelefono.size() != 1 || !listaTelefonosContieneUsuarioLogeado) {
-            return new MensajeDTO<>(String.valueOf(true), "Este número de teléfono ya está en uso. Por favor, pruebe con otro");
-        } else {
-            return new MensajeDTO<>(String.valueOf(false), null);
+            throw new IllegalArgumentException("Este número de teléfono ya está en uso. Por favor, pruebe con otro");
         }
     }
 

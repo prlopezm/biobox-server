@@ -66,7 +66,7 @@ public class GlobalExceptionsManager extends ResponseEntityExceptionHandler {
         HttpHeaders headers = new HttpHeaders();
         headers.set(MENSAJE, ex.getLocalizedMessage() == null ? MSG_GENERICO : ex.getLocalizedMessage());
         log.error("IllegalStateException: {}", ex.getLocalizedMessage() == null ? MSG_GENERICO : ex.getLocalizedMessage());
-        return handleExceptionInternal(ex, body, headers, HttpStatus.INTERNAL_SERVER_ERROR, request);
+        return handleExceptionInternal(ex, body, headers, HttpStatus.BAD_REQUEST, request);
     }
 
     @ExceptionHandler(value = RuntimeException.class)

@@ -66,3 +66,6 @@ values ('TWILIO', 'SMS.TWILIO.ACCOUNT-SID', 'SMS.TWILIO.ACCOUNT-SID', 'ACa990919
         'Token de Twilio', true),
        ('TWILIO', 'SMS.TWILIO.FROM-NUMBER', 'SMS.TWILIO.FROM-NUMBER', '+15202638223',
         'Teléfono emisor de Twilio', true);
+
+ALTER TABLE public.arq_usuario ADD nuevo_ingreso boolean DEFAULT false NOT NULL;
+COMMENT ON COLUMN public.arq_usuario.nuevo_ingreso IS 'Usuarios que recién se crean y aún no han validado su email mediante la liga que se les anvía. No pueden firmarse en la aplicacion';

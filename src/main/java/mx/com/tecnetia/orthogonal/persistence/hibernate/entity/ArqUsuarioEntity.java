@@ -54,6 +54,11 @@ import java.util.Objects;
     @Basic
     @Column(name = "pendiente_confirmacion", nullable = false)
     private Boolean pendienteConfirmacion;
+
+
+    @Basic
+    @Column(name = "nuevo_ingreso", nullable = false)
+    private Boolean nuevoIngreso;
     @Basic
     @Column(name = "id_arq_cliente", nullable = false, insertable = false, updatable = false)
     private Long idArqCliente;
@@ -238,5 +243,12 @@ import java.util.Objects;
 	public void setRegistroConcluido(Boolean registroConcluido) {
 		this.registroConcluido = registroConcluido;
 	}
-	    
+
+    public Boolean getNuevoIngreso() {
+        return nuevoIngreso;
+    }
+
+    public void setNuevoIngreso(Boolean nuevoIngreso) {
+        this.nuevoIngreso = nuevoIngreso;
+    }
 }

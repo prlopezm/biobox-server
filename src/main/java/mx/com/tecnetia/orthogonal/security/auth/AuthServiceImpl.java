@@ -51,7 +51,9 @@ public class AuthServiceImpl implements AuthService {
 
         var usuarioEntity = this.usuarioEntityRepository.findByNick(loginUsuario.getNick().toLowerCase())
                 .orElseThrow(() -> new IllegalArgumentException("El correo electrónico no existe"));
-
+        if(usuarioEntity.getNuevoIngreso()){
+            throw new IllegalArgumentException("Debes confirmar tu email antes.");
+        }
         if (Boolean.TRUE.equals(usuarioEntity.getActivo())) {
             Authentication authentication;
             try {

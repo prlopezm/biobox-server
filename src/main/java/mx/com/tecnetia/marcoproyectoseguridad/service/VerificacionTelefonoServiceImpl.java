@@ -39,15 +39,15 @@ public class VerificacionTelefonoServiceImpl implements VerificacionTelefonoServ
 		}
 		
 		String otp = this.getOTP(telefono);
-		String mensaje = "Su código de verficación para BioBox es: " + otp;
+		String mensaje = "Su código de verificación para BioBox es: " + otp;
 		SMS sms = new SMS(PaisEnum.MEXICO.getCodigo() + telefono, mensaje);
 		String response = twilioSMSService.send(sms);		
 		
 		if(response != null) {
-			log.info("El codigo de verificacion fue enviado correctamente");
+			log.info("El código de verificación fue enviado correctamente");
 			return new MensajeDTO<>(EstatusProcesoEnum.EXITOSO.getValue(), "Código enviado", otp);
 		}else {
-			log.info("No se envio el codigo de verificacion");			
+			log.info("No se envió el código de verificación");
 			throw new IllegalArgumentException("Error al enviar código");
 		}
 	}
