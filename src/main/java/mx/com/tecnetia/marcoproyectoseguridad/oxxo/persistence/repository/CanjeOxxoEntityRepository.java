@@ -7,6 +7,8 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.Optional;
+
 @Repository
 public interface CanjeOxxoEntityRepository extends JpaRepository<CanjeOxxoEntity, Long> {
 
@@ -18,5 +20,5 @@ public interface CanjeOxxoEntityRepository extends JpaRepository<CanjeOxxoEntity
                 and EXTRACT(MONTH FROM co.momento) = EXTRACT(MONTH FROM CURRENT_DATE)
                 and co.arqUsuarioId = :arqUsuarioId
             """)
-    Integer canjesMesActualUsuario(@Param("arqUsuarioId") @NotNull Long arqUsuarioId);
+    Optional<Integer> canjesMesActualUsuario(@Param("arqUsuarioId") @NotNull Long arqUsuarioId);
 }

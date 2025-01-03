@@ -149,7 +149,7 @@ public class ReciclajeController {
             @Schema(implementation = void.class)))})
     @PostMapping(value="/recicla-producto-quiosco")
     public ResponseEntity<Void> reciclaProductoQuiosco(@Valid @RequestBody ReciclaProductoQuioscoResponseDTO reciclaProductoQuioscoDTO) {
-        log.info("/recicla-producto-quiosco {}",reciclaProductoQuioscoDTO);
+//        log.info("/recicla-producto-quiosco {}",reciclaProductoQuioscoDTO);
     	if(reciclaProductoQuioscoDTO.getPeso()!=null) {
     		this.reciclajeService.reciclaProductoEnQuioscoConPeso(reciclaProductoQuioscoDTO.getIdUsuario(), 
 													        	  reciclaProductoQuioscoDTO.getIdProducto(),

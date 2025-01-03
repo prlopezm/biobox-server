@@ -58,7 +58,9 @@ public class CanjePuntosOxxoServiceImpl implements CanjePuntosOxxoService {
         var respuesta = canjearPuntos(usuarioFirmado.getIdArqUsuario(), ret.getData().getMember_id(), opcionCanje);
         descuentaPuntosCanje(usuarioFirmado.getIdArqUsuario(), opcionCanje.getPuntosCanjear());
         var baseUrlWithContext = ServletUriComponentsBuilder.fromCurrentContextPath().build().toUriString();
+        log.info("baseUrlWithContext: {}",baseUrlWithContext);
         var baseUrl = baseUrlWithContext.replace(ServletUriComponentsBuilder.fromCurrentContextPath().build().getPath(), "");
+        log.info("baseUrl: {}",baseUrl);
         log.info("Enviando email con información del canje de Oxxo");
         emailOxxoService.enviarEmail(usuarioFirmado.getEmail(), respuesta.getData().getTicket_id(), respuesta.getData().getTransaction_id().toString(), baseUrl);
         return "Canje completado con éxito. Recibirás un email con la información del canje.";

@@ -1,5 +1,6 @@
 package mx.com.tecnetia.orthogonal.services;
 
+import jakarta.annotation.Resource;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import mx.com.tecnetia.marcoproyectoseguridad.dto.catalogo.MensajeDTO;
@@ -28,6 +29,7 @@ import mx.com.tecnetia.orthogonal.utils.EstatusVerificacionEnum;
 import mx.com.tecnetia.orthogonal.utils.crypto.AES;
 import mx.com.tecnetia.orthogonal.utils.email.EmailOperationsThymeleafService;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -54,6 +56,9 @@ public class UsuarioServiceImpl implements UsuarioService {
     private final EmailOperationsThymeleafService emailOperationsThymeleafService;
     private final VerificacionEmailService verificacionEmailService;
     private final VerificacionTelefonoService verificacionTelefonoService;
+    @Resource
+    @Lazy
+    private UsuarioServiceImpl usuarioServiceImpl;
 
     @Value("${cliente.codigo}")
     private String codigoCliente;
@@ -166,17 +171,17 @@ public class UsuarioServiceImpl implements UsuarioService {
     @Override
     @Transactional
     public MensajeDTO<?> editarUsuario(EditaUsuarioArquitecturaDTO datos) {
-        var usuarioLogeado = this.getUsuarioLogeado();
-        //Valida existencia de idientificadores
+        var usuarioLogeado = this.usuarioServiceImpl.getUsuarioLogeado();
+        //Valida existencia de identificadores:
         this.existenIdentificadoresAlEditar(usuarioLogeado, datos.getNick(), datos.getEmail(), datos.getTelefono());
 
         log.info("Editar usuario: {}", datos);
         usuarioLogeado.setNombres(datos.getNombres());
         usuarioLogeado.setApellidoPaterno(datos.getApellidoPaterno());
         usuarioLogeado.setApellidoMaterno(datos.getApellidoMaterno());
-        usuarioLogeado.setNick(datos.getEmail().toLowerCase());
-        usuarioLogeado.setEmail(datos.getEmail().toLowerCase());
-        usuarioLogeado.setTelefono(datos.getTelefono());
+        usuarioLogeado.setNick(datos.getEmail().toLowerCase().strip());
+        usuarioLogeado.setEmail(datos.getEmail().toLowerCase().strip());
+        usuarioLogeado.setTelefono(datos.getTelefono().strip());
         usuarioLogeado.setEmailValidado(datos.isEmailValidado());
         usuarioLogeado.setTelefonoValidado(datos.isTelefonoValidado());
         usuarioLogeado.setRegistroConcluido(this.verificaRegistro(usuarioLogeado));
@@ -248,10 +253,14 @@ public class UsuarioServiceImpl implements UsuarioService {
     public void desactivarUsuario(String correo) {
         ArqUsuarioEntity arqUsuarioEnt = arqUsuarioRepository.findByEmail(correo)
                 .orElseThrow(() -> new IllegalArgumentException("No existe el usuario especificado."));
-        arqUsuarioEnt.setActivo(false);
-        this.arqUsuarioRepository.save(arqUsuarioEnt);
+        var usuarioLogeado = this.usuarioServiceImpl.getUsuarioLogeado();
+        if(!Objects.equals(usuarioLogeado.getIdArqUsuario(), arqUsuarioEnt.getIdArqUsuario())) {
+            throw new IllegalArgumentException("No puedes eliminar otro usuario distinto al tuyo.");
+        }
+        this.arqUsuarioRepository.delete(arqUsuarioEnt);
+        /*arqUsuarioEnt.setActivo(false);
+        this.arqUsuarioRepository.save(arqUsuarioEnt);*/
     }
-
 
     @Override
     @Transactional(readOnly = true)

@@ -18,7 +18,6 @@ import mx.com.tecnetia.orthogonal.persistence.hibernate.entity.ArqUsuarioEntity;
 import mx.com.tecnetia.orthogonal.persistence.hibernate.repository.ArqPropiedadEntityRepository;
 import mx.com.tecnetia.orthogonal.persistence.hibernate.repository.ArqUsuarioRepository;
 import mx.com.tecnetia.orthogonal.utils.email.EmailOperationsThymeleafService;
-import mx.com.tecnetia.orthogonal.utils.notificaciones.FirebaseNotificationsService;
 import mx.com.tecnetia.orthogonal.utils.quioscos.TipoPicEnum;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.core.env.Environment;
@@ -76,6 +75,7 @@ public class ReciclajeServiceImpl implements ReciclajeService {
     private final MaterialEntityRepository materialEntityRepository;
     private final SubMarcaEntityRepository subMarcaEntityRepository;
     private final FabricanteEntityRepository fabricanteEntityRepository;
+    private final ColorEntityRepository colorEntityRepository;
 
     private void enviarMailLlenado(List<QuioscoEntity> quioscos) {
         String begin = "<tr>" +
@@ -292,7 +292,7 @@ public class ReciclajeServiceImpl implements ReciclajeService {
             }
 
             if (tipoQuiosco == TipoPicEnum.ARDUINO.getTipoPic() && productoOptional.isEmpty()) {
-                log.warn("El código de barras {} no está dado de alta en la BD",barCode);
+                log.warn("El código de barras {} no está dado de alta en la BD", barCode);
                 reciclajeServiceImpl.enviaEmailSKUNotFound(barCode);
                 var ent = this.guardaNuevoProductoReciclableNOTFOUND(barCode);
                 producto = getProductoAReciclarDTO(ent);
@@ -301,7 +301,7 @@ public class ReciclajeServiceImpl implements ReciclajeService {
             //TODO: Es probable que esta sección y la anterior puedan unirse.
             if (tipoQuiosco == TipoPicEnum.PLC.getTipoPic() && productoOptional.isEmpty()) {
                 var ent = this.guardaNuevoProductoReciclableNOTFOUND(barCode);
-               //En esta sección, antes buscaba el producto con código de barras NOT_FOUND y usaba ese
+                //En esta sección, antes buscaba el producto con código de barras NOT_FOUND y usaba ese
                 log.warn("No encontramos el código de barras {} en nuestro catálogo de productos a reciclar.", barCode);
                 producto = getProductoAReciclarDTO(ent);
                 //Enviar email con el SKU que no se encontró:
@@ -450,7 +450,7 @@ public class ReciclajeServiceImpl implements ReciclajeService {
         byte[] fotoByte = Base64.getDecoder().decode(foto);
 
         var productoReciclable = this.productoReciclableEntityRepository.findById(idProducto)
-                .orElseThrow(()-> new IllegalStateException(""));
+                .orElseThrow(() -> new IllegalStateException("El producto reciclable no se encuentra en la BD."));
         //Antes, cuando era posible que el producto no existiera en la BD, aquí lo guardaba
         //Cuando el producto no está en la BD. idProductoReciclado=0L. Buscar qué pasa con el algoritmo. Tengo que meterlo en la BD como producto NOT_FOUND
         //productoReciclable = productoReciclableOpt.orElseGet(() -> this.guardaNuevoProductoReciclableNOTFOUND(barcode));
@@ -466,7 +466,10 @@ public class ReciclajeServiceImpl implements ReciclajeService {
 
         try {
             log.info("Llamando a validaProductoFoto. idProductoReciclado: {}, barcode: {}, label: {}", idProductoReciclado, barcode, label);
-            productoValido = this.validaProductoFoto(idProductoReciclado, barcode, label, foto);
+            //TODO:Dos líneas comentadas para saber si la demora es por la llamada al algoritmo:
+            /*productoValido = this.validaProductoFoto(idProductoReciclado, barcode, label, foto);
+            productoReciclado.setExitoso(productoValido);*/
+            productoValido = true;
             productoReciclado.setExitoso(productoValido);
             this.productoRecicladoEntityRepository.save(productoReciclado);
         } catch (Exception e) {
@@ -485,22 +488,30 @@ public class ReciclajeServiceImpl implements ReciclajeService {
         var ent = new ProductoReciclableEntity();
         var cap = this.capacidadEntityRepository.findAll().get(0);
         var mat = this.materialEntityRepository.findByNombre("NOT_FOUND")
-                .orElseThrow(()-> new IllegalStateException("No se ha configurado la BD para material NOT_FOUND."));
+                .orElseThrow(() -> new IllegalStateException("No se ha configurado la BD para material NOT_FOUND."));
         var subMarca = this.subMarcaEntityRepository.findByNombre("NOT_FOUND")
-                        .orElseThrow(()-> new IllegalStateException("No se ha configurado la BD para sub marcas NOT_FOUND."));
+                .orElseThrow(() -> new IllegalStateException("No se ha configurado la BD para sub marcas NOT_FOUND."));
         var fabricante = this.fabricanteEntityRepository.findByNombre("NOT_FOUND")
-                .orElseThrow(()-> new IllegalStateException("No se ha configurado la BD para fabricante NOT_FOUND."));
+                .orElseThrow(() -> new IllegalStateException("No se ha configurado la BD para fabricante NOT_FOUND."));
 
         ent.setBarCode(barCode)
                 .setCapacidadByIdCapacidad(cap)
                 .setMaterialByIdMaterial(mat)
-                .setPesoMaximo(new BigDecimal(25))
-                .setPesoMinimo(new BigDecimal(50))
+                .setPesoMaximo(new BigDecimal(2))
+                .setPesoMinimo(new BigDecimal(1))
                 .setSku(barCode)
                 .setSubMarcaByIdSubMarca(subMarca)
                 .setFabricante(fabricante);
         ent = this.productoReciclableEntityRepository.save(ent);
         log.info("Guardando producto reciclable NOT_FOUND automáticamente: {}", ent);
+        var color = this.colorEntityRepository.findAll().get(0);
+        var puntos = new ProductoReciclableColorPuntosEntity()
+                .setColorByIdColor(color)
+                .setFechaFin(null)
+                .setFechaInicio(Timestamp.valueOf(LocalDateTime.now()))
+                .setProdReciclableByIdProdReciclable(ent)
+                .setPuntos(1);
+        this.productoReciclableColorPuntosEntityRepository.save(puntos);
         return ent;
     }
 
@@ -560,7 +571,9 @@ public class ReciclajeServiceImpl implements ReciclajeService {
                     if (productoValido) {
                         puntos = usuarioPuntos.getPuntos() + productoReciclableColor.getPuntos();
                     } else {
-                        puntos = usuarioPuntos.getPuntos();
+                        //TODO: Para la prueba en OXXO comenté esta línea, para que siempre sumara puntos
+                        //puntos = usuarioPuntos.getPuntos();
+                        puntos = usuarioPuntos.getPuntos() + productoReciclableColor.getPuntos();
                     }
                     log.info("El usuario {} se le dan {} puntos. Tenía antes: {}", usuario.getEmail(), puntos, usuarioPuntos.getPuntos());
                     usuarioPuntos.setPuntos(puntos);

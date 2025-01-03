@@ -136,7 +136,8 @@ class OxxoCommonsService {
             log.error("No se puede obtener la cantidad máxima de reciclajes por mes desde la BD. El valor no es un entero");
             throw new IllegalStateException("No se puede obtener la cantidad máxima de reciclajes por mes desde la BD. El valor no es un entero");
         }
-        var cantidadCanjesMesActual = this.canjeOxxoEntityRepository.canjesMesActualUsuario(idUsuarioLogeado);
+        var cantidadCanjesMesActual = this.canjeOxxoEntityRepository.canjesMesActualUsuario(idUsuarioLogeado)
+                .orElse(0);
         return Math.max(cantidadMaximaCanjesMensuales - cantidadCanjesMesActual, 0);
     }
 }
