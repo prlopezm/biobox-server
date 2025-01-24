@@ -266,8 +266,8 @@ public class UsuarioServiceImpl implements UsuarioService {
     @Transactional(readOnly = true)
     public EstatusUsuarioDTO existeUsuario(String nick) {
         EstatusUsuarioDTO estatusUsuarioDTO = new EstatusUsuarioDTO();
-        var arqUsuarioEntityOpt = this.arqUsuarioRepository.findByNick(nick.toLowerCase());
-        if (!arqUsuarioEntityOpt.isPresent()) {
+        var arqUsuarioEntityOpt = this.arqUsuarioRepository.findByNick(nick.toLowerCase().trim());
+        if (arqUsuarioEntityOpt.isEmpty()) {
             estatusUsuarioDTO.setExisteUsuario(false);
 
             return estatusUsuarioDTO;

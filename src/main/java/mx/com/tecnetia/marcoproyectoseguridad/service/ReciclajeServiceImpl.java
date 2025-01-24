@@ -36,12 +36,17 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -438,6 +443,15 @@ public class ReciclajeServiceImpl implements ReciclajeService {
         log.info("Saliendo de reciclaProductoEnQuioscoConPeso");
     }
 
+    private void saveFoto(byte[] foto, String nombreFoto) {
+        try{
+            var path = Paths.get(nombreFoto);
+            Files.write(path,foto);
+        } catch (IOException e) {
+            log.error("Error al guardar foto {}", e.getMessage());
+            throw new RuntimeException(e);
+        }
+    }
     @Override
     @Transactional
     public void reciclaProductoEnQuioscoConFoto(@NotNull Long idUsuario, @NotNull Long idProducto, @NotNull Long idQuiosco,
@@ -448,7 +462,10 @@ public class ReciclajeServiceImpl implements ReciclajeService {
         ProductoRecicladoEntity productoReciclado = null;
         //ProductoReciclableEntity productoReciclable = null;
         byte[] fotoByte = Base64.getDecoder().decode(foto);
-
+        //TODO: Salvado temporal para revisar foto. Borrar para ir a producción
+        saveFoto(fotoByte,"C:/pics/fotosreciclaje/"+String.valueOf(idQuiosco)
+                .concat("-")
+                .concat(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss")))+".jpg");
         var productoReciclable = this.productoReciclableEntityRepository.findById(idProducto)
                 .orElseThrow(() -> new IllegalStateException("El producto reciclable no se encuentra en la BD."));
         //Antes, cuando era posible que el producto no existiera en la BD, aquí lo guardaba
@@ -467,17 +484,17 @@ public class ReciclajeServiceImpl implements ReciclajeService {
         try {
             log.info("Llamando a validaProductoFoto. idProductoReciclado: {}, barcode: {}, label: {}", idProductoReciclado, barcode, label);
             //TODO:Dos líneas comentadas para saber si la demora es por la llamada al algoritmo:
-            /*productoValido = this.validaProductoFoto(idProductoReciclado, barcode, label, foto);
-            productoReciclado.setExitoso(productoValido);*/
-            productoValido = true;
+            productoValido = this.validaProductoFoto(idProductoReciclado, barcode, label, foto);
             productoReciclado.setExitoso(productoValido);
+            //productoValido = true;
+            //productoReciclado.setExitoso(productoValido);
             this.productoRecicladoEntityRepository.save(productoReciclado);
         } catch (Exception e) {
             log.error(e);
             productoValido = false;
         }
 
-        log.info("Termina guardado de reciclaje");
+        log.info("Termina guardado de reciclaje con foto.");
     }
 
     private ProductoReciclableEntity guardaNuevoProductoReciclableNOTFOUND(String barCode) {
@@ -648,6 +665,7 @@ public class ReciclajeServiceImpl implements ReciclajeService {
             var responseData = restTemplate.postForObject(urlEndpoint, requestEntity, ResponseValidaProductoFotoDTO.class);
             productoValido = responseData.getData().isUserResponse();
             log.info("Respuesta de la IA: {} ", responseData.getData());
+            //TODO: Guardar en una tabla la respuesta de la IA
         } catch (RestClientException e) {
             log.error("No se pudo invocar al servicio de reconocimiento de imágenes: {}", e.getMessage());
             productoValido = false;

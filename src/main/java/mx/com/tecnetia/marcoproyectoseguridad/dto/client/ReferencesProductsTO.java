@@ -23,7 +23,7 @@ import javax.xml.datatype.XMLGregorianCalendar;
  *         &lt;element name="confirmation" type="{http://www.w3.org/2001/XMLSchema}long" minOccurs="0"/>
  *         &lt;element name="createDate" type="{http://www.w3.org/2001/XMLSchema}dateTime" minOccurs="0"/>
  *         &lt;element name="createUser" type="{http://www.w3.org/2001/XMLSchema}long" minOccurs="0"/>
- *         &lt;element name="id" type="{http://www.w3.org/2001/XMLSchema}long" minOccurs="0"/>
+ *         &lt;element name="promoId" type="{http://www.w3.org/2001/XMLSchema}long" minOccurs="0"/>
  *         &lt;element name="productId" type="{http://www.w3.org/2001/XMLSchema}long" minOccurs="0"/>
  *         &lt;element name="reference" type="{http://www.w3.org/2001/XMLSchema}string" minOccurs="0"/>
  *         &lt;element name="regex" type="{http://www.w3.org/2001/XMLSchema}string" minOccurs="0"/>
@@ -187,7 +187,7 @@ public class ReferencesProductsTO
     }
 
     /**
-     * Obtiene el valor de la propiedad id.
+     * Obtiene el valor de la propiedad promoId.
      * 
      * @return
      *     possible object is
@@ -199,7 +199,7 @@ public class ReferencesProductsTO
     }
 
     /**
-     * Define el valor de la propiedad id.
+     * Define el valor de la propiedad promoId.
      * 
      * @param value
      *     allowed object is

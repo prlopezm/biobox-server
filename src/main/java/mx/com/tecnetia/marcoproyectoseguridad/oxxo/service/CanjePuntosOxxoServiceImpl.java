@@ -68,7 +68,7 @@ public class CanjePuntosOxxoServiceImpl implements CanjePuntosOxxoService {
 
     void verificaSiPuedeCanjearPuntos(@NotNull Long usuarioFirmadoId, @NotNull Integer puntos) {
         if (oxxoCommonsService.cantidadPuntosUsuarioFirmado(usuarioFirmadoId) < puntos) {
-            throw new IllegalArgumentException("Debe obtener más puntos BioBox");
+            throw new IllegalArgumentException("Debe acumular al menos 5 puntos BioBox");
         }
         if (oxxoCommonsService.cantidadCanjesRestantes(usuarioFirmadoId) < puntos) {
             var msg = this.oxxoCommonsService.propiedadesOxxo()

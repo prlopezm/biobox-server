@@ -49,7 +49,7 @@ public class AuthServiceImpl implements AuthService {
         String linkMasInfo = environment.getProperty("link.mas.info");
         String linkAvisoPrivacidad = environment.getProperty("link.aviso.privacidad");
 
-        var usuarioEntity = this.usuarioEntityRepository.findByNick(loginUsuario.getNick().toLowerCase())
+        var usuarioEntity = this.usuarioEntityRepository.findByNick(loginUsuario.getNick().toLowerCase().trim())
                 .orElseThrow(() -> new IllegalArgumentException("El correo electrónico no existe"));
         if(usuarioEntity.getNuevoIngreso()){
             throw new IllegalArgumentException("Debes confirmar tu email antes.");
@@ -58,7 +58,7 @@ public class AuthServiceImpl implements AuthService {
             Authentication authentication;
             try {
                 authentication = authenticationManager.authenticate(
-                        new UsernamePasswordAuthenticationToken(loginUsuario.getNick().toLowerCase(), loginUsuario.getPassw()));
+                        new UsernamePasswordAuthenticationToken(loginUsuario.getNick().toLowerCase().trim(), loginUsuario.getPassw()));
             } catch (AuthenticationException ex) {
                 throw new IllegalArgumentException("El usuario o la contraseña proporcionados no son válidos.");
             }

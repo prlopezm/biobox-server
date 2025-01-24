@@ -63,7 +63,7 @@ public class ImagenesRestController {
             @ApiResponse(responseCode = "200", description = "Operación exitosa.", content = @Content(schema =
             @Schema(implementation = FotoProductoRecicladoListDTO.class)))})
     @GetMapping(value="/consulta-fotos")
-    public ResponseEntity<FotoProductoRecicladoListDTO> consultaFotos(@Valid @Parameter( description = "Separar cada id con una coma. Ejemplo: ids = 1,2,3 ")
+    public ResponseEntity<FotoProductoRecicladoListDTO> consultaFotos(@Valid @Parameter( description = "Separar cada promoId con una coma. Ejemplo: ids = 1,2,3 ")
     																		 @RequestParam String ids) {
 		List<Long> idList = new ArrayList<>();
 		Arrays.asList(ids.split(",")).forEach(id->{

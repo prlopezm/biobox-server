@@ -55,6 +55,7 @@ public class JwtDTO {
     private boolean registroConcluido;
     private String mensaje;
     private Boolean oxxoActivo = true;
+    private Boolean cuponeraActiva = true;
 
     public JwtDTO(String token, String nick, String nombre, String apPaterno, String apMaterno, String email, String rol, String telefono,
                   List<PuntosColorDTO> puntosList,

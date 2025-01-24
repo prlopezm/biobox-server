@@ -52,9 +52,9 @@ public class ReciclajeController {
                                                                    @RequestParam(name = "idQuiosco") Long idQuiosco) {
         ProductoAReciclarDTO producto = null;
         var idUsuarioLogueado = this.usuarioService.getUsuarioLogeado().getIdArqUsuario();
-        if (idQuiosco == 0){
+        if (idQuiosco == 0) {
             producto = this.reciclajeService.getProductoAReciclar(barCode, idUsuarioLogueado);
-        }else {
+        } else {
             producto = this.reciclajeService.enviarProcesoDeReciclajeEnQuiosco(idUsuarioLogueado, barCode, idQuiosco);
         }
         return new ResponseEntity<>(producto, HttpStatus.OK);
@@ -71,7 +71,7 @@ public class ReciclajeController {
         quioscoEnUsoDTO.setQuioscoEnUso(true);
         Boolean quioscoEnUso = this.reciclajeService.quioscoEstaEnUso(idQuiosco);
         quioscoEnUsoDTO.setQuioscoEnUso(quioscoEnUso);
-        log.info("**** QUIOSCO ESTA EN USO Controller? {}",quioscoEnUso);
+        log.info("**** QUIOSCO ESTA EN USO Controller? {}", quioscoEnUso);
         return new ResponseEntity<>(quioscoEnUsoDTO, HttpStatus.OK);
     }
 
@@ -83,7 +83,7 @@ public class ReciclajeController {
             content = @Content(schema = @Schema(implementation = ProductoAReciclarDTO.class)))})
     @GetMapping(value = "/estresar-maquina")
     public ResponseEntity<Void> identificarBarCode(@RequestParam(name = "idQuiosco") Long idQuiosco) {
-            this.reciclajeService.estresarQuiosco( idQuiosco);
+        this.reciclajeService.estresarQuiosco(idQuiosco);
         return new ResponseEntity<>(HttpStatus.CREATED);
     }
 
@@ -94,9 +94,9 @@ public class ReciclajeController {
             content = @Content(schema = @Schema(implementation = ProductoAReciclarDTO.class)))})
     @GetMapping(value = "/busca-maquina")
     public ResponseEntity<QuioscoDTO> buscarMaquina(@RequestParam("qr")
-                                                        @NotEmpty
-                                                        @Parameter(description = "QR de la maquina en la que se encuentra el usuario.")
-                                                        String qr) {
+                                                    @NotEmpty
+                                                    @Parameter(description = "QR de la maquina en la que se encuentra el usuario.")
+                                                    String qr) {
         var idUsuarioLogueado = this.usuarioService.getUsuarioLogeado().getIdArqUsuario();
         QuioscoDTO maquina = this.reciclajeService.buscaMaquina(qr, idUsuarioLogueado);
         return new ResponseEntity<>(maquina, HttpStatus.OK);
@@ -108,7 +108,7 @@ public class ReciclajeController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Operación exitosa.", content = @Content(schema =
             @Schema(implementation = MensajeDTO.class)))})
-    @PostMapping(value="/valida-producto")
+    @PostMapping(value = "/valida-producto")
     public ResponseEntity<MensajeDTO<?>> validaProducto(@Valid @RequestBody ReciclaProductoDTO reciclaProductoDTO) {
         byte[] fotoByte = Base64.getDecoder().decode(reciclaProductoDTO.getFoto());
         MensajeDTO<?> mensaje = this.reciclajeService.validaProducto(reciclaProductoDTO.getPrd(), fotoByte);
@@ -121,7 +121,7 @@ public class ReciclajeController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Operación exitosa.", content = @Content(schema =
             @Schema(implementation = MensajeDTO.class)))})
-    @PostMapping(value="/valida-codigo-barras")
+    @PostMapping(value = "/valida-codigo-barras")
     public ResponseEntity<MensajeDTO<?>> validaProductoCodigoBarras(@Valid @RequestBody ReciclaProductoDTO reciclaProductoDTO) {
         MensajeDTO<?> mensaje = this.reciclajeService.validaProductoCodigoBarras(reciclaProductoDTO.getPrd(), reciclaProductoDTO.getFoto());
         return new ResponseEntity<>(mensaje, HttpStatus.OK);
@@ -133,7 +133,7 @@ public class ReciclajeController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Operación exitosa.", content = @Content(schema =
             @Schema(implementation = MensajeDTO.class)))})
-    @PostMapping(value="/recicla-producto")
+    @PostMapping(value = "/recicla-producto")
     public ResponseEntity<MensajeDTO<?>> reciclaProducto(@Valid @RequestBody ReciclaProductoDTO reciclaProductoDTO) {
         var idUsuarioLogueado = this.usuarioService.getUsuarioLogeado().getIdArqUsuario();
         byte[] fotoByte = Base64.getDecoder().decode(reciclaProductoDTO.getFoto());
@@ -147,22 +147,27 @@ public class ReciclajeController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Operación exitosa.", content = @Content(schema =
             @Schema(implementation = void.class)))})
-    @PostMapping(value="/recicla-producto-quiosco")
+    @PostMapping(value = "/recicla-producto-quiosco")
     public ResponseEntity<Void> reciclaProductoQuiosco(@Valid @RequestBody ReciclaProductoQuioscoResponseDTO reciclaProductoQuioscoDTO) {
-//        log.info("/recicla-producto-quiosco {}",reciclaProductoQuioscoDTO);
-    	if(reciclaProductoQuioscoDTO.getPeso()!=null) {
-    		this.reciclajeService.reciclaProductoEnQuioscoConPeso(reciclaProductoQuioscoDTO.getIdUsuario(), 
-													        	  reciclaProductoQuioscoDTO.getIdProducto(),
-													        	  reciclaProductoQuioscoDTO.getIdQuiosco(),
-													        	  reciclaProductoQuioscoDTO.getCodigoRespuesta(),
-													        	  reciclaProductoQuioscoDTO.getPeso());
-    	}else if(reciclaProductoQuioscoDTO.getFoto()!=null) {
-            this.reciclajeService.reciclaProductoEnQuioscoConFoto(reciclaProductoQuioscoDTO.getIdUsuario(), 
-												            	  reciclaProductoQuioscoDTO.getIdProducto(),
-												            	  reciclaProductoQuioscoDTO.getIdQuiosco(),
-												            	  reciclaProductoQuioscoDTO.getCodigoRespuesta(),
-												            	  reciclaProductoQuioscoDTO.getFoto(),
-												            	  reciclaProductoQuioscoDTO.getBarCode());
+        var foto = reciclaProductoQuioscoDTO.getFoto() != null ? reciclaProductoQuioscoDTO.getFoto().length() : null;
+        log.info("End Point /recicla-producto-quiosco. BarCode:{}, idProducto: {}, respuesta: {}, peso: {}, tamaño foto: {}",
+                reciclaProductoQuioscoDTO.getBarCode(), reciclaProductoQuioscoDTO.getIdProducto(), reciclaProductoQuioscoDTO.getCodigoRespuesta()
+                , reciclaProductoQuioscoDTO.getPeso(), foto);
+        if (reciclaProductoQuioscoDTO.getPeso() != null) {
+            log.info("Se recicla desde un PLC");
+            this.reciclajeService.reciclaProductoEnQuioscoConPeso(reciclaProductoQuioscoDTO.getIdUsuario(),
+                    reciclaProductoQuioscoDTO.getIdProducto(),
+                    reciclaProductoQuioscoDTO.getIdQuiosco(),
+                    reciclaProductoQuioscoDTO.getCodigoRespuesta(),
+                    reciclaProductoQuioscoDTO.getPeso());
+        } else if (reciclaProductoQuioscoDTO.getFoto() != null) {
+            log.info("Se recicla desde un Arduino");
+            this.reciclajeService.reciclaProductoEnQuioscoConFoto(reciclaProductoQuioscoDTO.getIdUsuario(),
+                    reciclaProductoQuioscoDTO.getIdProducto(),
+                    reciclaProductoQuioscoDTO.getIdQuiosco(),
+                    reciclaProductoQuioscoDTO.getCodigoRespuesta(),
+                    reciclaProductoQuioscoDTO.getFoto(),
+                    reciclaProductoQuioscoDTO.getBarCode());
         }
         return new ResponseEntity<>(HttpStatus.CREATED);
     }
@@ -173,7 +178,7 @@ public class ReciclajeController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Operación exitosa.", content = @Content(schema =
             @Schema(implementation = void.class)))})
-    @PostMapping(value="/notificacion-reciclaje-terminado")
+    @PostMapping(value = "/notificacion-reciclaje-terminado")
     public ResponseEntity<Void> enviaNotificacionReciclajeTerminado(@Valid @RequestBody ReciclajeTerminadoRequestDTO reciclajeTerminadoRequestDTO) {
         this.reciclajeService.enviarNotificacionReciclajeTerminado(reciclajeTerminadoRequestDTO);
         return new ResponseEntity<>(HttpStatus.CREATED);

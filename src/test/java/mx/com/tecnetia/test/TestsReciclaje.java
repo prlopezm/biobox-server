@@ -62,7 +62,7 @@ class TestsReciclaje {
 		String api = "/reciclaje/bar-code";
 		String token = getTokenLogin();
 		String barCode = "75007614";
-		Long idQuiosco = 3L; //id de un quiosco tipo PLC		
+		Long idQuiosco = 3L; //promoId de un quiosco tipo PLC
 		
 		String idProducto =
 	      given()
@@ -89,7 +89,7 @@ class TestsReciclaje {
 		String api = "/reciclaje/bar-code";
 		String token = getTokenLogin();
 		String barCode = "75007614";
-		Long idQuiosco = 19L; //id de un quiosco tipo arduino		
+		Long idQuiosco = 19L; //promoId de un quiosco tipo arduino
 		
 		String idProducto =
 	      given()
