@@ -37,6 +37,10 @@ CREATE TABLE public.canje_oxxo
     CONSTRAINT canje_oxxo_pk PRIMARY KEY (id),
     CONSTRAINT canje_oxxo_opcion_canje_oxxo_fk FOREIGN KEY (opcion_canje_oxxo_id) REFERENCES public.opcion_canje_oxxo (id)
 );
+INSERT INTO opcion_canje_oxxo (NOMBRE, PUNTOS_CANJEAR)
+VALUES ('Obtén 5 puntos Spin con un valor de 5 puntos BioBox', 5),
+       ('Obtén 10 puntos Spin con un valor de 10 puntos BioBox', 10);
+
 --Luego de crear las tablas, hay que hacer las inserciones de la tabla opcion_canje_oxxo
 --Inserciones de propiedades de Oxxo:
 insert into arq_propiedad(grupo_codigo, codigo, nombre, valor, descripcion, activo)
@@ -92,7 +96,7 @@ values ('TWILIO', 'SMS.TWILIO.ACCOUNT-SID', 'SMS.TWILIO.ACCOUNT-SID', 'ACa990919
 
 ALTER TABLE public.arq_usuario
     ADD nuevo_ingreso boolean DEFAULT false NOT NULL;
-COMMENT ON COLUMN public.arq_usuario.nuevo_ingreso IS 'Usuarios que recién se crean y aún no han validado su email mediante la liga que se les anvía. No pueden firmarse en la aplicacion';
+COMMENT ON COLUMN public.arq_usuario.nuevo_ingreso IS 'Usuarios que recién se crean y aún no han validado su email mediante la liga que se les envía. No pueden firmarse en la aplicacion';
 
 -------DDL Cuponerapp
 CREATE TABLE public.cuponerapp
