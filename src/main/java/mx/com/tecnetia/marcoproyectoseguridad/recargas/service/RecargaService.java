@@ -1,6 +1,6 @@
 package mx.com.tecnetia.marcoproyectoseguridad.recargas.service;
 
-import mx.com.tecnetia.marcoproyectoseguridad.cuponerapp.dto.CuponCanjeadoDTO;
+import mx.com.tecnetia.marcoproyectoseguridad.cuponerapp.dto.RespuestaCuponCanjeadoDTO;
 import mx.com.tecnetia.marcoproyectoseguridad.recargas.dto.DenominacionRecargaDTO;
 import mx.com.tecnetia.marcoproyectoseguridad.recargas.dto.RecargaDTO;
 
@@ -12,5 +12,5 @@ import java.util.List;
  */
 public interface RecargaService {
     List<DenominacionRecargaDTO> getAllDenominacionRecargaCel();
-    CuponCanjeadoDTO registrarRecarga(RecargaDTO recarga);
+    RespuestaCuponCanjeadoDTO registrarRecarga(RecargaDTO recarga);
 }

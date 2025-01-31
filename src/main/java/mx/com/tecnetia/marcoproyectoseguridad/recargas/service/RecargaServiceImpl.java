@@ -2,7 +2,7 @@ package mx.com.tecnetia.marcoproyectoseguridad.recargas.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
-import mx.com.tecnetia.marcoproyectoseguridad.cuponerapp.dto.CuponCanjeadoDTO;
+import mx.com.tecnetia.marcoproyectoseguridad.cuponerapp.dto.RespuestaCuponCanjeadoDTO;
 import mx.com.tecnetia.marcoproyectoseguridad.persistence.hibernate.repository.UsuarioPuntosColorEntityRepository;
 import mx.com.tecnetia.marcoproyectoseguridad.recargas.dto.DenominacionRecargaDTO;
 import mx.com.tecnetia.marcoproyectoseguridad.recargas.dto.RecargaDTO;
@@ -38,7 +38,7 @@ public class RecargaServiceImpl implements RecargaService {
 
     @Override
     @Transactional
-    public CuponCanjeadoDTO registrarRecarga(RecargaDTO recarga) {
+    public RespuestaCuponCanjeadoDTO registrarRecarga(RecargaDTO recarga) {
         var denominacionRecarga = this.denominacionRecargaCelEntityRepository.findById(recarga.getIdDenominacionRecargaDTO())
                 .orElseThrow(() -> new IllegalArgumentException("Denominacion recarga no encontrada"));
         var idUsuarioFirmado = this.usuarioService.getUsuarioLogeado()
@@ -46,7 +46,7 @@ public class RecargaServiceImpl implements RecargaService {
         var puntosRestantes = descuentaPuntosCanje(idUsuarioFirmado, denominacionRecarga.getPuntos());
         guardaHistorico(denominacionRecarga, idUsuarioFirmado, recarga.getCel());
         var msg = String.format("Se descontaron %1$d puntos. Te quedan %2$d puntos restantes", denominacionRecarga.getPuntos(), puntosRestantes);
-        return new CuponCanjeadoDTO(msg, puntosRestantes);
+        return new RespuestaCuponCanjeadoDTO(msg, puntosRestantes);
     }
 
     private void guardaHistorico(DenominacionRecargaCelEntity denominacionRecarga, Long idUsuarioFirmado, String cel) {

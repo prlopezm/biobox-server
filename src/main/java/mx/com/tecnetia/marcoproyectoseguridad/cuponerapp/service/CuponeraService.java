@@ -2,7 +2,11 @@ package mx.com.tecnetia.marcoproyectoseguridad.cuponerapp.service;
 
 import mx.com.tecnetia.marcoproyectoseguridad.cuponerapp.dto.CuponCanjeadoDTO;
 import mx.com.tecnetia.marcoproyectoseguridad.cuponerapp.dto.CuponDTO;
+import mx.com.tecnetia.marcoproyectoseguridad.cuponerapp.dto.RespuestaCuponCanjeadoDTO;
+import mx.com.tecnetia.marcoproyectoseguridad.cuponerapp.dto.RespuestaCuponeraDTO;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -12,5 +16,7 @@ import java.util.List;
 public interface CuponeraService {
     List<CuponDTO> getCupones();
 
-    CuponCanjeadoDTO canjear(Integer promoId);
+    RespuestaCuponCanjeadoDTO canjear(RespuestaCuponeraDTO respuestaCuponeraDTO);
+
+    List<CuponCanjeadoDTO> cuponesCanjeadosEntreFechas(LocalDate fechaInicial, LocalDate fechaFinal);
 }

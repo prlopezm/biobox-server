@@ -128,6 +128,14 @@ CREATE TABLE public.cuponerapp_usada
 ALTER TABLE public.cuponerapp_usada
     ADD CONSTRAINT cuponerapp_usada_cuponerapp_fk FOREIGN KEY (cuponerapp_id) REFERENCES public.cuponerapp (id);
 
+ALTER TABLE public.cuponerapp_usada ADD folio text NULL;
+ALTER TABLE public.cuponerapp_usada ADD fecha text NULL;
+ALTER TABLE public.cuponerapp_usada ADD hora text NULL;
+ALTER TABLE public.cuponerapp_usada ADD codigo_qr text NULL;
+ALTER TABLE public.cuponerapp_usada ADD imagen_base64 text NULL;
+ALTER TABLE public.cuponerapp_usada ADD costo text NULL;
+ALTER TABLE public.cuponerapp_usada ADD nombre text NULL;
+
 -----DDL Recargas telefonicas
 CREATE TABLE public.compania_cel
 (

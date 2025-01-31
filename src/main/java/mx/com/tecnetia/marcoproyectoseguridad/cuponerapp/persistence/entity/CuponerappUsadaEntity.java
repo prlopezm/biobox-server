@@ -35,4 +35,26 @@ public class CuponerappUsadaEntity {
     @ColumnDefault("now()")
     @Column(name = "momento", nullable = false)
     private LocalDateTime momento = LocalDateTime.now();
+
+    @Column(name = "folio")
+    private String folio;
+
+    @Column(name = "fecha", length = Integer.MAX_VALUE)
+    private String fecha;
+
+    @Column(name = "hora", length = Integer.MAX_VALUE)
+    private String hora;
+
+    @Column(name = "codigo_qr", length = Integer.MAX_VALUE)
+    private String codigoQr;
+
+    @Column(name = "imagen_base64", length = Integer.MAX_VALUE)
+    private String imagenBase64;
+
+    @Column(name = "costo", length = Integer.MAX_VALUE)
+    private String costo;
+
+    @Column(name = "nombre", length = Integer.MAX_VALUE)
+    private String nombre;
+
 }

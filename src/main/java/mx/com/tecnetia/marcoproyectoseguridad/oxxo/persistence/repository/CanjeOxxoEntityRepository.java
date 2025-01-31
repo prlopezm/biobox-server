@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -21,4 +22,12 @@ public interface CanjeOxxoEntityRepository extends JpaRepository<CanjeOxxoEntity
                 and co.arqUsuarioId = :arqUsuarioId
             """)
     Optional<Integer> canjesMesActualUsuario(@Param("arqUsuarioId") @NotNull Long arqUsuarioId);
+
+    @Query("""
+            select ent
+                from CanjeOxxoEntity ent
+                join fetch ent.opcionCanjeOxxo
+            where ent.arqUsuarioId = :idArqUsuario
+            """)
+    List<CanjeOxxoEntity> usadasPor(@Param("idArqUsuario") Long idArqUsuario);
 }

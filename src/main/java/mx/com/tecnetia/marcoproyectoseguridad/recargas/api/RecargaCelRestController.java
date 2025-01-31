@@ -11,7 +11,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
-import mx.com.tecnetia.marcoproyectoseguridad.cuponerapp.dto.CuponCanjeadoDTO;
+import mx.com.tecnetia.marcoproyectoseguridad.cuponerapp.dto.RespuestaCuponCanjeadoDTO;
 import mx.com.tecnetia.marcoproyectoseguridad.recargas.dto.DenominacionRecargaDTO;
 import mx.com.tecnetia.marcoproyectoseguridad.recargas.dto.RecargaDTO;
 import mx.com.tecnetia.marcoproyectoseguridad.recargas.service.RecargaService;
@@ -51,11 +51,11 @@ public class RecargaCelRestController {
             security = {@SecurityRequirement(name = "security_auth")})
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Operación exitosa.",
-                    content = @Content(schema = @Schema(implementation = CuponCanjeadoDTO.class))),
+                    content = @Content(schema = @Schema(implementation = RespuestaCuponCanjeadoDTO.class))),
             @ApiResponse(responseCode = "4xx/5xx", description = "Operación fallida.",
                     content = @Content(schema = @Schema(implementation = IllegalArgumentException.class)))})
     @PostMapping(value = "/")
-    public ResponseEntity<CuponCanjeadoDTO> registrar(@RequestBody @NotNull @Valid RecargaDTO recargaDTO) {
+    public ResponseEntity<RespuestaCuponCanjeadoDTO> registrar(@RequestBody @NotNull @Valid RecargaDTO recargaDTO) {
         var ret = this.recargaService.registrarRecarga(recargaDTO);
         return ResponseEntity.ok().body(ret);
     }
