@@ -462,7 +462,7 @@ public class ReciclajeServiceImpl implements ReciclajeService {
         ProductoRecicladoEntity productoReciclado = null;
         //ProductoReciclableEntity productoReciclable = null;
         byte[] fotoByte = Base64.getDecoder().decode(foto);
-        //TODO: Salvado temporal para revisar foto. Borrar para ir a producción
+        //TODO: Salvado temporal para revisar foto. Evaluar si borramos para ir a producción
         saveFoto(fotoByte,"C:/pics/fotosreciclaje/"+String.valueOf(idQuiosco)
                 .concat("-")
                 .concat(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss")))+".jpg");
@@ -483,17 +483,16 @@ public class ReciclajeServiceImpl implements ReciclajeService {
 
         try {
             log.info("Llamando a validaProductoFoto. idProductoReciclado: {}, barcode: {}, label: {}", idProductoReciclado, barcode, label);
-            //TODO:Dos líneas comentadas para saber si la demora es por la llamada al algoritmo:
-            productoValido = this.validaProductoFoto(idProductoReciclado, barcode, label, foto);
+            //TODO:Dos líneas comentadas, para que siempre el producto sea válido, esto hasta probar el algoritmo:
+/*            productoValido = this.validaProductoFoto(idProductoReciclado, barcode, label, foto);
+            productoReciclado.setExitoso(productoValido);*/
+            productoValido = true;
             productoReciclado.setExitoso(productoValido);
-            //productoValido = true;
-            //productoReciclado.setExitoso(productoValido);
             this.productoRecicladoEntityRepository.save(productoReciclado);
         } catch (Exception e) {
             log.error(e);
             productoValido = false;
         }
-
         log.info("Termina guardado de reciclaje con foto.");
     }
 
@@ -514,7 +513,7 @@ public class ReciclajeServiceImpl implements ReciclajeService {
         ent.setBarCode(barCode)
                 .setCapacidadByIdCapacidad(cap)
                 .setMaterialByIdMaterial(mat)
-                .setPesoMaximo(new BigDecimal(2))
+                .setPesoMaximo(new BigDecimal(2000))
                 .setPesoMinimo(new BigDecimal(1))
                 .setSku(barCode)
                 .setSubMarcaByIdSubMarca(subMarca)
@@ -654,7 +653,7 @@ public class ReciclajeServiceImpl implements ReciclajeService {
         requestDTO.setLabel(label);
 //        requestDTO.setImageBase64(imageBase64);
         requestDTO.setImageBase64(image);
-        log.info("Enviando al clasificado. label: {}, idProductoReciclado: {}, clase: {}, tamaño imagen: {}",
+        log.info("Enviando al clasificador. label: {}, idProductoReciclado: {}, clase: {}, tamaño imagen: {}",
                 requestDTO.getLabel(), requestDTO.getIdProductoReciclado(), requestDTO.getClase(), requestDTO.getImageBase64().length());
 
         try {

@@ -30,7 +30,12 @@ public class HistoricoService {
                 .stream()
                 .map(u -> new HistoricoCanjeDTO()
                         .setPuntosUsados(u.getOpcionCanjeOxxo().getPuntosCanjear())
-                        .setCanjeNombre(u.getOpcionCanjeOxxo().getNombre()))
+                        .setNombrePromocion(u.getOpcionCanjeOxxo().getNombre())
+                        .setFecha(u.getMomento())
+                        .setFolio("Canje enviado por email.")
+                        .setFecha(u.getMomento())
+                        .setLlevaDetalle(false)
+                        .setTipo("SPIN"))
                 .toList());
     }
 
@@ -39,8 +44,14 @@ public class HistoricoService {
         return CompletableFuture.completedFuture(this.cuponerappUsadaEntityRepository.usadasPor(idArqUsuario)
                 .stream()
                 .map(u -> new HistoricoCanjeDTO()
-                        .setCanjeNombre(u.getCuponUsado().getPromocion())
-                        .setPuntosUsados(u.getPuntos()))
+                        .setNombrePromocion(u.getCuponUsado().getPromocion())
+                        .setPuntosUsados(u.getPuntos())
+                        .setFecha(u.getMomento())
+                        .setFolio(u.getFolio())
+                        .setCodigoQr(u.getCodigoQr())
+                        .setImagenBase64(u.getImagenBase64())
+                        .setLlevaDetalle(true)
+                        .setTipo("CUPON"))
                 .toList());
     }
 
@@ -49,8 +60,11 @@ public class HistoricoService {
         return CompletableFuture.completedFuture(this.denominacionRecargaCelUsadaEntityRepository.usadasPor(idArqUsuario)
                 .stream()
                 .map(u -> new HistoricoCanjeDTO()
-                        .setCanjeNombre(u.getDenominacionRecargaCel().getCompaniaCel().getNombre())
-                        .setPuntosUsados(u.getPuntos()))
+                        .setNombrePromocion(u.getDenominacionRecargaCel().getCompaniaCel().getNombre())
+                        .setPuntosUsados(u.getPuntos())
+                        .setFecha(u.getMomento())
+                        .setLlevaDetalle(false)
+                        .setTipo("RECARGA"))
                 .toList());
     }
 }

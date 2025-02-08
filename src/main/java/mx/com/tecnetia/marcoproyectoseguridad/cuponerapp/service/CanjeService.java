@@ -33,6 +33,6 @@ public class CanjeService {
         ret.addAll(oxxo.join());
         ret.addAll(recargas.join());
         ret.addAll(cupones.join());
-        return ret;
+        return ret.stream().sorted().toList();
     }
 }

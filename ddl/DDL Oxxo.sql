@@ -7,15 +7,19 @@ alter table arq_usuario
 update arq_usuario au
 set registro_concluido = true;
 
-update arq_usuario
+/*Esta la comenté porque no entendí por qué "vaciar" los celulares*/
+/*update arq_usuario
 set telefono = ''
 where telefono in (select telefono
                    from arq_usuario
                    group by telefono
-                   having count(1) > 1);
+                   having count(1) > 1);*/
 
-update programa_codigos_descuento
-set imagen = REPLACE(imagen, 'https://tecnetiadev.com/pics', '');
+/*update programa_codigos_descuento
+set imagen = REPLACE(imagen, 'https://tecnetiadev.com/pics', '');*/
+--Puesto por mi para mitigar las molestias de los usuarios que ya existen:
+update arq_usuario
+set pendiente_confirmacion = false, email_validado = true, telefono_validado = true, registro_concluido = true, nuevo_ingreso =false;
 -------Fin DDL Kike
 
 
@@ -72,7 +76,7 @@ CREATE TABLE public.oxxo_member_id
 (
     id             bigserial   NOT NULL,
     arq_usuario_id int8        NOT NULL,
-    member_id      varchar(20) NOT NULL,
+    member_id      varchar(2000) NOT NULL,
     CONSTRAINT oxxo_member_id_pk PRIMARY KEY (id),
     CONSTRAINT oxxo_member_id_unique UNIQUE (arq_usuario_id)
 );

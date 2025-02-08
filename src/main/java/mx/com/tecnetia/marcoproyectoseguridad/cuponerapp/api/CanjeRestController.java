@@ -30,12 +30,13 @@ import java.util.List;
 @RequestMapping("/canjes")
 @Validated
 @RequiredArgsConstructor
-@Tag(name = "Canjes", description = "Canjes distintos a prontipagos. Oxxo, recargas cel y cupones")
+@Tag(name = "Canjes", description = "Canjes distintos a prontipagos: Oxxo, recargas cel y cupones")
 public class CanjeRestController {
     private final CanjeService canjeService;
 
     @PreAuthorize("isAuthenticated()")
-    @Operation(summary = "Histórico", description = "Histórico de canjes de Oxxo, recargas cel y cupones",
+    @Operation(summary = "Histórico", description = "Histórico de canjes de Oxxo, recargas cel y cupones. El campo llevaDetalle" +
+            " habla de si el objeto lleva una imagen para mostrarse",
             security = {@SecurityRequirement(name = "security_auth")})
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Operación exitosa.",
             content = {@Content(array = @ArraySchema(schema = @Schema(implementation = HistoricoCanjeDTO.class)))})})

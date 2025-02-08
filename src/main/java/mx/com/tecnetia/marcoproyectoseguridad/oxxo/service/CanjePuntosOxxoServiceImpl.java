@@ -57,6 +57,7 @@ public class CanjePuntosOxxoServiceImpl implements CanjePuntosOxxoService {
         var ret = oxxoCommonsService.validarUsuario(usuarioFirmado.getTelefono());
         var respuesta = canjearPuntos(usuarioFirmado.getIdArqUsuario(), ret.getData().getMember_id(), opcionCanje);
         descuentaPuntosCanje(usuarioFirmado.getIdArqUsuario(), opcionCanje.getPuntosCanjear());
+
         var baseUrlWithContext = ServletUriComponentsBuilder.fromCurrentContextPath().build().toUriString();
         log.info("baseUrlWithContext: {}",baseUrlWithContext);
         var baseUrl = baseUrlWithContext.replace(ServletUriComponentsBuilder.fromCurrentContextPath().build().getPath(), "");

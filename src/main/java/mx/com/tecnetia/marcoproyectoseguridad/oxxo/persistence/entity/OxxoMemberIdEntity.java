@@ -27,9 +27,8 @@ public class OxxoMemberIdEntity {
     @Column(name = "arq_usuario_id", nullable = false, length = Integer.MAX_VALUE)
     private Long arqUsuarioId;
 
-    @Size(max = 20)
     @NotNull
-    @Column(name = "member_id", nullable = false, length = 20)
+    @Column(name = "member_id", nullable = false)
     private String memberId;
 
 }
