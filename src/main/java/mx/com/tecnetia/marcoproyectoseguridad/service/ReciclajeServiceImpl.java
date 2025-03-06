@@ -36,12 +36,9 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.nio.file.Files;
-import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.Timestamp;
@@ -212,6 +209,22 @@ public class ReciclajeServiceImpl implements ReciclajeService {
         return null;
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public List<ProductoAReciclarDTO> getListaProductosAReciclar(String barCodes, Long idUsuarioLogeado) {
+        List<String> codes = Arrays.stream(barCodes.split(",")).toList();
+        if (this.usuarioPuedeReciclar(idUsuarioLogeado)) {
+            List<ProductoAReciclarDTO> productos = this.productoReciclableEntityRepository.getProductosByBarCodes(codes);
+            if (productos.isEmpty()) {
+                log.error("Error al encontrar los códigos de barras en la BD: " + codes);
+                var msg = "No encontramos los códigos de barras " + codes + " en nuestro catálogo de productos a reciclar. Intenta de nuevo.";
+                throw new IllegalArgumentException(msg);
+            }
+            return productos;
+        }
+        return null;
+    }
+
     @Synchronized
     private void tomarQuiosco(Long idQuiosco, Long idUsuario) {
         Date fechaActual = new Date();
@@ -349,6 +362,67 @@ public class ReciclajeServiceImpl implements ReciclajeService {
             log.info("Termina envio de reciclaje");
 
             return producto;
+        }
+
+        return null;
+    }
+
+    @Override
+    @Transactional
+    public List<ProductoAReciclarDTO> enviarProcesosDeReciclajeEnQuiosco(Long idUsuarioLogeado, String barCodes, Long idQuiosco) {
+        log.info("Tomando quiosco V2 *********************");
+        this.tomarQuiosco(idQuiosco, idUsuarioLogeado);
+
+        if (this.usuarioPuedeReciclar(idUsuarioLogeado)) {
+
+            QuioscoEntity quioscoEntity = this.quioscoEntityRepository.findById(idQuiosco)
+                    .orElseThrow(() -> new IllegalArgumentException("No encontramos la máquina en nuestro catálogo. Intenta de nuevo."));
+            int tipoQuiosco = quioscoEntity.getTipoArduino() ? TipoPicEnum.ARDUINO.getTipoPic() : TipoPicEnum.PLC.getTipoPic();
+
+            List<ProductoAReciclarDTO> productos = new ArrayList<>();
+            List<String> codes = Arrays.stream(barCodes.split(",")).toList();
+            for (String code: codes) {
+                Optional<ProductoAReciclarDTO> productoOptional = this.productoReciclableEntityRepository.getProductoByBarCode(code);
+                ProductoAReciclarDTO producto = null;
+                if (productoOptional.isPresent()) {
+                    producto = productoOptional.get();
+                }
+
+                if (productoOptional.isEmpty()) {
+                    log.warn("El código de barras {} no está dado de alta en la BD", code);
+                    reciclajeServiceImpl.enviaEmailSKUNotFound(code);
+                    var ent = this.guardaNuevoProductoReciclableNOTFOUND(code);
+                    producto = getProductoAReciclarDTO(ent);
+                }
+                productos.add(producto);
+            }
+
+            /* INVOCA SERVICIO DE QUIOSCO PARA EMPEZAR A RECICLAR */
+            String ip = quioscoEntity.getIp();
+            String urlServerMaquina = "http://" + ip + ":8080";
+            String urlEndpoint = urlServerMaquina + environment.getProperty("maquina.service.url.reciclar");
+
+            var restTemplate = new RestTemplate();
+            try {
+                ReciclaProductoQuioscoRequestV2DTO reciclaProductoQuioscoRequestDTO = new ReciclaProductoQuioscoRequestV2DTO();
+                reciclaProductoQuioscoRequestDTO.setIdQuiosco(idQuiosco);
+                reciclaProductoQuioscoRequestDTO.setBarCode(barCodes);
+                reciclaProductoQuioscoRequestDTO.setIdUsuario(idUsuarioLogeado);
+                reciclaProductoQuioscoRequestDTO.setIdsProducto(productos.stream().map(ProductoAReciclarDTO::getIdProducto).toList());
+                reciclaProductoQuioscoRequestDTO.setMoverCharolaALaDerecha(true);
+                reciclaProductoQuioscoRequestDTO.setTipoPic(tipoQuiosco);
+                var headers = new HttpHeaders();
+                headers.set("Content-Type", "application/json");
+                var requestEntity = new HttpEntity<>(reciclaProductoQuioscoRequestDTO, headers);
+                restTemplate.postForObject(urlEndpoint, requestEntity, Void.class);
+            } catch (RestClientException e) {
+                log.error("Error al enviar el proceso de reciclaje a la máquina: {}", e.getMessage());
+                throw new IllegalArgumentException("No se pudo iniciar el proceso de reciclaje en la máquina. Intenta de nuevo.");
+            }
+
+            log.info("Termina envio de reciclaje");
+
+            return productos;
         }
 
         return null;
@@ -495,6 +569,39 @@ public class ReciclajeServiceImpl implements ReciclajeService {
         }
         log.info("Termina guardado de reciclaje con foto.");
     }
+
+    @Override
+    @Transactional
+    public void reciclaProductoEnQuioscoArduino(@NotNull Long idUsuario, @NotNull List<Long> idsProducto, @NotNull Long idQuiosco,
+                                                Integer codigoRespuesta, @NotBlank String barcode) {
+
+        var productoValido = true;
+        String label = "";
+        Long idProductoReciclado = 0L;
+        ProductoRecicladoEntity productoReciclado = null;
+
+        var productosReciclable = this.productoReciclableEntityRepository.findByIds(idsProducto);
+
+        if (productosReciclable.isEmpty()) {
+            throw new IllegalStateException("El producto reciclable no se encuentra en la BD.");
+        }
+
+        for (ProductoReciclableEntity productoReciclable: productosReciclable) {
+            label = productoReciclable.getSubMarcaByIdSubMarca().getNombre();
+            productoReciclado = this.guardarReciclaje(productoReciclable, idUsuario, idQuiosco, codigoRespuesta, productoValido);
+            idProductoReciclado = productoReciclado.getIdProductoReciclado();
+
+            try {
+                log.info("Guardando producto. idProductoReciclado: {}, barcode: {}, label: {}", idProductoReciclado, barcode, label);
+                productoReciclado.setExitoso(productoValido);
+                this.productoRecicladoEntityRepository.save(productoReciclado);
+            } catch (Exception e) {
+                log.error(e);
+            }
+            log.info("Termina guardado de reciclaje en Arduino.");
+        }
+    }
+
 
     private ProductoReciclableEntity guardaNuevoProductoReciclableNOTFOUND(String barCode) {
         var entOpt = this.productoReciclableEntityRepository.findBySku(barCode);
@@ -750,6 +857,45 @@ public class ReciclajeServiceImpl implements ReciclajeService {
         }
 
         return productoValido;
+    }
+
+    @Override
+    @Transactional
+    public void reciclaProductoEnQuioscoPlc(Long idUsuario, List<Long> idsProducto, Long idQuiosco, Integer codigoRespuesta, Integer peso) {
+        log.info("Entrando a reciclaProductoEnQuioscoConPeso");
+        boolean productoValido = true;
+
+        ProductoRecicladoEntity productoReciclado = null;
+        List<ProductoReciclableEntity> productosReciclable = this.productoReciclableEntityRepository.findByIds(idsProducto);
+        if (productosReciclable.isEmpty()) {
+            throw new IllegalArgumentException("Los productos no se encuentran en la BD.");
+        }
+
+        for (ProductoReciclableEntity productoReciclable: productosReciclable) {
+            if (!Objects.equals(productoReciclable.getSku(), "NOT_FOUND") &&
+                    ((new BigDecimal(peso).compareTo(productoReciclable.getPesoMinimo()) < 0)
+                            || (new BigDecimal(peso).compareTo(productoReciclable.getPesoMaximo()) > 0))) {
+                productoValido = false;
+            }
+            if ((new BigDecimal(peso).compareTo(productoReciclable.getPesoMinimo()) < 0)
+                    || (new BigDecimal(peso).compareTo(productoReciclable.getPesoMaximo()) > 0)) {
+                productoValido = false;
+            }
+            log.info("Producto: {}. Peso recibido: {}. Rango de pesos: entre {} y {}. Es válido: {}. Código de respuesta RECICLAJE_EXITOSO: {}",
+                    productoReciclable.getSku(), peso, productoReciclable.getPesoMinimo(), productoReciclable.getPesoMaximo(), productoValido,
+                    codigoRespuesta.intValue() == CodigoRespuestaMaquinaEnum.RECICLAJE_EXITOSO.getCodigoRespuesta());
+
+            productoReciclado = this.guardarReciclaje(productoReciclable, idUsuario, idQuiosco, codigoRespuesta, productoValido);
+
+            PesoProductoRecicladoEntity pesoProducto = new PesoProductoRecicladoEntity();
+            pesoProducto.setProductoRecicladoByIdProductoReciclado(productoReciclado);
+            pesoProducto.setPeso(peso);
+            pesoProducto.setExitoso(productoValido);
+            pesoProducto = this.pesoProductoRecicladoEntityRepository.save(pesoProducto);
+
+            log.info("Termina guardado de reciclaje");
+            log.info("Saliendo de reciclaProductoEnQuioscoConPeso");
+        }
     }
 
     private static Resource getTestFile(byte[] file) throws IOException {

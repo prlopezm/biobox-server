@@ -1,5 +1,6 @@
 package mx.com.tecnetia.marcoproyectoseguridad.persistence.hibernate.repository;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -17,6 +18,15 @@ public interface ProductoReciclableEntityRepository extends JpaRepository<Produc
             """)
     Optional<ProductoAReciclarDTO> getProductoByBarCode(@Param("barCode") String barCode);
 
+    @Query("""
+            select new mx.com.tecnetia.marcoproyectoseguridad.dto.reciclaje.ProductoAReciclarDTO
+            (ent.idProductoReciclable,ent.sku, ent.idMaterial)
+            from ProductoReciclableEntity ent where ent.barCode IN :barCodes
+            """)
+    List<ProductoAReciclarDTO> getProductosByBarCodes(@Param("barCodes") List<String> barCodes);
+
     Optional<ProductoReciclableEntity> findBySku(String sku);
+
+    List<ProductoReciclableEntity> findByIds(List<Long> ids);
 
 }
