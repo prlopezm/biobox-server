@@ -492,7 +492,7 @@ public class ReciclajeServiceImpl implements ReciclajeService {
         ProductoReciclableEntity productoReciclable = this.productoReciclableEntityRepository.findById(idProducto)
                 .orElseThrow(() -> new IllegalArgumentException("El producto no se encuentra en la BD."));
 
-        if (!Objects.equals(productoReciclable.getSku(), "NOT_FOUND") &&
+        if (!Objects.equals(productoReciclable.getSku(), "RECICLADO_EXITOSO") &&
                 ((new BigDecimal(peso).compareTo(productoReciclable.getPesoMinimo()) < 0)
                         || (new BigDecimal(peso).compareTo(productoReciclable.getPesoMaximo()) > 0))) {
             productoValido = false;
@@ -610,12 +610,12 @@ public class ReciclajeServiceImpl implements ReciclajeService {
         }
         var ent = new ProductoReciclableEntity();
         var cap = this.capacidadEntityRepository.findAll().get(0);
-        var mat = this.materialEntityRepository.findByNombre("NOT_FOUND")
-                .orElseThrow(() -> new IllegalStateException("No se ha configurado la BD para material NOT_FOUND."));
-        var subMarca = this.subMarcaEntityRepository.findByNombre("NOT_FOUND")
-                .orElseThrow(() -> new IllegalStateException("No se ha configurado la BD para sub marcas NOT_FOUND."));
-        var fabricante = this.fabricanteEntityRepository.findByNombre("NOT_FOUND")
-                .orElseThrow(() -> new IllegalStateException("No se ha configurado la BD para fabricante NOT_FOUND."));
+        var mat = this.materialEntityRepository.findByNombre("RECICLADO_EXITOSO")
+                .orElseThrow(() -> new IllegalStateException("No se ha configurado la BD para material RECICLADO_EXITOSO."));
+        var subMarca = this.subMarcaEntityRepository.findByNombre("RECICLADO_EXITOSO")
+                .orElseThrow(() -> new IllegalStateException("No se ha configurado la BD para sub marcas RECICLADO_EXITOSO."));
+        var fabricante = this.fabricanteEntityRepository.findByNombre("RECICLADO_EXITOSO")
+                .orElseThrow(() -> new IllegalStateException("No se ha configurado la BD para fabricante RECICLADO_EXITOSO."));
 
         ent.setBarCode(barCode)
                 .setCapacidadByIdCapacidad(cap)
@@ -626,7 +626,7 @@ public class ReciclajeServiceImpl implements ReciclajeService {
                 .setSubMarcaByIdSubMarca(subMarca)
                 .setFabricante(fabricante);
         ent = this.productoReciclableEntityRepository.save(ent);
-        log.info("Guardando producto reciclable NOT_FOUND automáticamente: {}", ent);
+        log.info("Guardando producto reciclable RECICLADO_EXITOSO automáticamente: {}", ent);
         var color = this.colorEntityRepository.findAll().get(0);
         var puntos = new ProductoReciclableColorPuntosEntity()
                 .setColorByIdColor(color)
