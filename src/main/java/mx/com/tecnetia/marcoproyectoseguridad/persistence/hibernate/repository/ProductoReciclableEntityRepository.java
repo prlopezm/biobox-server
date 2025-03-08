@@ -27,6 +27,5 @@ public interface ProductoReciclableEntityRepository extends JpaRepository<Produc
 
     Optional<ProductoReciclableEntity> findBySku(String sku);
 
-    List<ProductoReciclableEntity> findByIds(List<Long> ids);
 
 }

@@ -212,7 +212,7 @@ public class ReciclajeServiceImpl implements ReciclajeService {
     @Override
     @Transactional(readOnly = true)
     public List<ProductoAReciclarDTO> getListaProductosAReciclar(String barCodes, Long idUsuarioLogeado) {
-        List<String> codes = Arrays.stream(barCodes.split(",")).toList();
+        List<String> codes = Arrays.stream(barCodes.split(",")).map(String::trim).toList();
         if (this.usuarioPuedeReciclar(idUsuarioLogeado)) {
             List<ProductoAReciclarDTO> productos = this.productoReciclableEntityRepository.getProductosByBarCodes(codes);
             if (productos.isEmpty()) {
@@ -380,7 +380,7 @@ public class ReciclajeServiceImpl implements ReciclajeService {
             int tipoQuiosco = quioscoEntity.getTipoArduino() ? TipoPicEnum.ARDUINO.getTipoPic() : TipoPicEnum.PLC.getTipoPic();
 
             List<ProductoAReciclarDTO> productos = new ArrayList<>();
-            List<String> codes = Arrays.stream(barCodes.split(",")).toList();
+            List<String> codes = Arrays.stream(barCodes.split(",")).map(String::trim).toList();
             for (String code: codes) {
                 Optional<ProductoAReciclarDTO> productoOptional = this.productoReciclableEntityRepository.getProductoByBarCode(code);
                 ProductoAReciclarDTO producto = null;
@@ -580,7 +580,7 @@ public class ReciclajeServiceImpl implements ReciclajeService {
         Long idProductoReciclado = 0L;
         ProductoRecicladoEntity productoReciclado = null;
 
-        var productosReciclable = this.productoReciclableEntityRepository.findByIds(idsProducto);
+        var productosReciclable = this.productoReciclableEntityRepository.findAllById(idsProducto);
 
         if (productosReciclable.isEmpty()) {
             throw new IllegalStateException("El producto reciclable no se encuentra en la BD.");
@@ -866,7 +866,7 @@ public class ReciclajeServiceImpl implements ReciclajeService {
         boolean productoValido = true;
 
         ProductoRecicladoEntity productoReciclado = null;
-        List<ProductoReciclableEntity> productosReciclable = this.productoReciclableEntityRepository.findByIds(idsProducto);
+        List<ProductoReciclableEntity> productosReciclable = this.productoReciclableEntityRepository.findAllById(idsProducto);
         if (productosReciclable.isEmpty()) {
             throw new IllegalArgumentException("Los productos no se encuentran en la BD.");
         }
