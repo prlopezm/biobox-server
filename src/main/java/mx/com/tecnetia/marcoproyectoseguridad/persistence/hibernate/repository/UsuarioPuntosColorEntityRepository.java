@@ -25,7 +25,7 @@ public interface UsuarioPuntosColorEntityRepository extends JpaRepository<Usuari
                         join ent.colorByIdColor c
             where ent.idArqUsuario = :idArqUsuario
             """)
-    Integer totalPuntosUsuario(@Param("idArqUsuario") Long idArqUsuario);
+    Optional<Integer> totalPuntosUsuario(@Param("idArqUsuario") Long idArqUsuario);
  
     Optional<UsuarioPuntosColorEntity> findByIdArqUsuario(@Param("idArqUsuario") Long idArqUsuario);
     

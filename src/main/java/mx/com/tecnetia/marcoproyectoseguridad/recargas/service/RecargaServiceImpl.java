@@ -32,8 +32,13 @@ public class RecargaServiceImpl implements RecargaService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<DenominacionRecargaDTO> getAllDenominacionRecargaCel() {
-        return this.denominacionRecargaCelEntityRepository.getAllDenominacionRecargaCel();
+    public List<DenominacionRecargaDTO> getAllDenominacionRecargaCel(Long idArqUsuario) {
+        var puntosUsuario = this.usuarioPuntosColorEntityRepository.totalPuntosUsuario(idArqUsuario)
+                .orElse(0);
+        return this.denominacionRecargaCelEntityRepository.getAllDenominacionRecargaCel()
+                .stream()
+                .filter(elem -> elem.getPuntos() <= puntosUsuario)
+                .toList();
     }
 
     @Override

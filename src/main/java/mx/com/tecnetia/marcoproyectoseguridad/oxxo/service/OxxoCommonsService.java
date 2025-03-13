@@ -120,7 +120,8 @@ class OxxoCommonsService {
     }
 
     int cantidadPuntosUsuarioFirmado(Long usuarioId) {
-        return this.usuarioPuntosColorEntityRepository.totalPuntosUsuario(usuarioId);
+        return this.usuarioPuntosColorEntityRepository.totalPuntosUsuario(usuarioId)
+                .orElse(0);
     }
 
     int cantidadCanjesRestantes(Long idUsuarioLogeado) {

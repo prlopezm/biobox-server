@@ -36,7 +36,13 @@ public class CuponeraServiceImpl implements CuponeraService {
     @Override
     @Transactional(readOnly = true)
     public List<CuponDTO> getCupones() {
-        return this.cuponerappEntityRepository.getCupones();
+        var idArqUsuario = this.usuarioService.getUsuarioLogeado().getIdArqUsuario();
+        var puntosUsuario = this.usuarioPuntosColorEntityRepository.totalPuntosUsuario(idArqUsuario)
+                .orElse(0);
+        return this.cuponerappEntityRepository.getCupones()
+                .stream()
+                .filter(elem -> elem.getPuntos() <= puntosUsuario)
+                .toList();
     }
 
     @Override
