@@ -3,6 +3,7 @@ package mx.com.tecnetia.marcoproyectoseguridad.service;
 import java.math.BigDecimal;
 import java.util.HashMap;
 
+import lombok.extern.log4j.Log4j2;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -14,6 +15,7 @@ import mx.com.tecnetia.marcoproyectoseguridad.util.DescuentosUtil;
 
 @Service
 @RequiredArgsConstructor
+@Log4j2
 public class PranaServiceImpl implements PranaService {
 
 	private final ProgramaService programaService;
@@ -80,7 +82,7 @@ public class PranaServiceImpl implements PranaService {
 			return new MensajeDTO<>("Tus puntos se han canjeado y en breve recibirás un email con la información para hacer válido tu beneficio.");				    	        	
 	        	
         }catch(Exception e) {
-        	e.printStackTrace();
+        	log.error("Ocurrió un error en el canje: {}",e.getMessage());
         	throw new IllegalArgumentException("No se pudo realizar el canje de tus puntos.");
         }
         		

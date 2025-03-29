@@ -115,7 +115,7 @@ public class ProgramaLealtadServiceImpl implements ProgramaLealtadService {
                     puntos.setPuntos(subprograma.getProgramaPuntosRequeridos().getPuntosCoste());
 
                     //Validamos puntaje de la categoria y del usuario
-                    int puntosusuario = usuarioPuntosOpt.get().getPuntos();
+                    int puntosusuario = usuarioPuntosOpt.isEmpty() ? 0 : usuarioPuntosOpt.get().getPuntos();
                     int puntosLimiteInferior = subprograma.getProgramaPuntosRequeridos().getPuntosLimiteInferior();
                     int puntosLimiteSuperiror = subprograma.getProgramaPuntosRequeridos().getPuntosLimiteInferior();
                     //puntos.setHabilitado((puntosusuario >= puntosLimiteInferior && puntosusuario <= puntosLimiteSuperiror) ? true :  false);

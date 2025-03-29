@@ -39,10 +39,10 @@ public class CuponeraServiceImpl implements CuponeraService {
         var idArqUsuario = this.usuarioService.getUsuarioLogeado().getIdArqUsuario();
         var puntosUsuario = this.usuarioPuntosColorEntityRepository.totalPuntosUsuario(idArqUsuario)
                 .orElse(0);
-        return this.cuponerappEntityRepository.getCupones()
-                .stream()
+        return this.cuponerappEntityRepository.getCupones();
+                /*.stream()
                 .filter(elem -> elem.getPuntos() <= puntosUsuario)
-                .toList();
+                .toList();*/
     }
 
     @Override
