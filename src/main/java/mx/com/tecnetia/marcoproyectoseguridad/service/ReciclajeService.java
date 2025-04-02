@@ -30,4 +30,6 @@ public interface ReciclajeService {
     Boolean quioscoEstaEnUso(Long idQuiosco);
     List<ProductoAReciclarDTO> getListaProductosAReciclar(String barCodes, Long idUsuarioLogeado);
     List<ProductoAReciclarDTO> enviarProcesosDeReciclajeEnQuiosco(Long idUsuarioLogeado, String barCodes, Long idQuiosco);
+    void cerrarQuiosco(Long idUsuarioLogeado, Long idQuiosco);
+    void abrirQuiosco(Long idQuiosco, Long idUsuarioLogueado);
 }

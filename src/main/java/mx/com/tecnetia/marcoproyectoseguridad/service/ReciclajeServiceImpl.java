@@ -580,25 +580,23 @@ public class ReciclajeServiceImpl implements ReciclajeService {
         Long idProductoReciclado = 0L;
         ProductoRecicladoEntity productoReciclado = null;
 
-        var productosReciclable = this.productoReciclableEntityRepository.findAllById(idsProducto);
+        for (Long id:  idsProducto) {
+            var productoReciclableOptional = this.productoReciclableEntityRepository.findById(id);
+            if (productoReciclableOptional.isPresent()) {
+                var productoReciclable = productoReciclableOptional.get();
+                label = productoReciclable.getSubMarcaByIdSubMarca().getNombre();
+                productoReciclado = this.guardarReciclaje(productoReciclable, idUsuario, idQuiosco, codigoRespuesta, productoValido);
+                idProductoReciclado = productoReciclado.getIdProductoReciclado();
 
-        if (productosReciclable.isEmpty()) {
-            throw new IllegalStateException("El producto reciclable no se encuentra en la BD.");
-        }
-
-        for (ProductoReciclableEntity productoReciclable: productosReciclable) {
-            label = productoReciclable.getSubMarcaByIdSubMarca().getNombre();
-            productoReciclado = this.guardarReciclaje(productoReciclable, idUsuario, idQuiosco, codigoRespuesta, productoValido);
-            idProductoReciclado = productoReciclado.getIdProductoReciclado();
-
-            try {
-                log.info("Guardando producto. idProductoReciclado: {}, barcode: {}, label: {}", idProductoReciclado, barcode, label);
-                productoReciclado.setExitoso(productoValido);
-                this.productoRecicladoEntityRepository.save(productoReciclado);
-            } catch (Exception e) {
-                log.error(e);
+                try {
+                    log.info("Guardando producto. idProductoReciclado: {}, barcode: {}, label: {}", idProductoReciclado, barcode, label);
+                    productoReciclado.setExitoso(productoValido);
+                    this.productoRecicladoEntityRepository.save(productoReciclado);
+                } catch (Exception e) {
+                    log.error(e);
+                }
+                log.info("Termina guardado de reciclaje en Arduino.");
             }
-            log.info("Termina guardado de reciclaje en Arduino.");
         }
     }
 
@@ -866,35 +864,35 @@ public class ReciclajeServiceImpl implements ReciclajeService {
         boolean productoValido = true;
 
         ProductoRecicladoEntity productoReciclado = null;
-        List<ProductoReciclableEntity> productosReciclable = this.productoReciclableEntityRepository.findAllById(idsProducto);
-        if (productosReciclable.isEmpty()) {
-            throw new IllegalArgumentException("Los productos no se encuentran en la BD.");
-        }
 
-        for (ProductoReciclableEntity productoReciclable: productosReciclable) {
-            if (!Objects.equals(productoReciclable.getSku(), "NOT_FOUND") &&
-                    ((new BigDecimal(peso).compareTo(productoReciclable.getPesoMinimo()) < 0)
-                            || (new BigDecimal(peso).compareTo(productoReciclable.getPesoMaximo()) > 0))) {
-                productoValido = false;
+        for (Long id: idsProducto) {
+            var productoReciclableOptional = this.productoReciclableEntityRepository.findById(id);
+            if (productoReciclableOptional.isPresent()) {
+                var productoReciclable = productoReciclableOptional.get();
+                if (!Objects.equals(productoReciclable.getSku(), "NOT_FOUND") &&
+                        ((new BigDecimal(peso).compareTo(productoReciclable.getPesoMinimo()) < 0)
+                                || (new BigDecimal(peso).compareTo(productoReciclable.getPesoMaximo()) > 0))) {
+                    productoValido = false;
+                }
+                if ((new BigDecimal(peso).compareTo(productoReciclable.getPesoMinimo()) < 0)
+                        || (new BigDecimal(peso).compareTo(productoReciclable.getPesoMaximo()) > 0)) {
+                    productoValido = false;
+                }
+                log.info("Producto: {}. Peso recibido: {}. Rango de pesos: entre {} y {}. Es válido: {}. Código de respuesta RECICLAJE_EXITOSO: {}",
+                        productoReciclable.getSku(), peso, productoReciclable.getPesoMinimo(), productoReciclable.getPesoMaximo(), productoValido,
+                        codigoRespuesta.intValue() == CodigoRespuestaMaquinaEnum.RECICLAJE_EXITOSO.getCodigoRespuesta());
+
+                productoReciclado = this.guardarReciclaje(productoReciclable, idUsuario, idQuiosco, codigoRespuesta, productoValido);
+
+                PesoProductoRecicladoEntity pesoProducto = new PesoProductoRecicladoEntity();
+                pesoProducto.setProductoRecicladoByIdProductoReciclado(productoReciclado);
+                pesoProducto.setPeso(peso);
+                pesoProducto.setExitoso(productoValido);
+                pesoProducto = this.pesoProductoRecicladoEntityRepository.save(pesoProducto);
+
+                log.info("Termina guardado de reciclaje");
+                log.info("Saliendo de reciclaProductoEnQuioscoConPeso");
             }
-            if ((new BigDecimal(peso).compareTo(productoReciclable.getPesoMinimo()) < 0)
-                    || (new BigDecimal(peso).compareTo(productoReciclable.getPesoMaximo()) > 0)) {
-                productoValido = false;
-            }
-            log.info("Producto: {}. Peso recibido: {}. Rango de pesos: entre {} y {}. Es válido: {}. Código de respuesta RECICLAJE_EXITOSO: {}",
-                    productoReciclable.getSku(), peso, productoReciclable.getPesoMinimo(), productoReciclable.getPesoMaximo(), productoValido,
-                    codigoRespuesta.intValue() == CodigoRespuestaMaquinaEnum.RECICLAJE_EXITOSO.getCodigoRespuesta());
-
-            productoReciclado = this.guardarReciclaje(productoReciclable, idUsuario, idQuiosco, codigoRespuesta, productoValido);
-
-            PesoProductoRecicladoEntity pesoProducto = new PesoProductoRecicladoEntity();
-            pesoProducto.setProductoRecicladoByIdProductoReciclado(productoReciclado);
-            pesoProducto.setPeso(peso);
-            pesoProducto.setExitoso(productoValido);
-            pesoProducto = this.pesoProductoRecicladoEntityRepository.save(pesoProducto);
-
-            log.info("Termina guardado de reciclaje");
-            log.info("Saliendo de reciclaProductoEnQuioscoConPeso");
         }
     }
 
@@ -904,4 +902,59 @@ public class ReciclajeServiceImpl implements ReciclajeService {
         return new FileSystemResource(testFile.toFile());
     }
 
+    @Override
+    public void cerrarQuiosco(Long idUsuarioLogeado, Long idQuiosco) {
+        QuioscoEntity quioscoEntity = this.quioscoEntityRepository.findById(idQuiosco)
+                .orElseThrow(() -> new IllegalArgumentException("No encontramos la máquina en nuestro catálogo. Intenta de nuevo."));
+        int tipoQuiosco = quioscoEntity.getTipoArduino() ? TipoPicEnum.ARDUINO.getTipoPic() : TipoPicEnum.PLC.getTipoPic();
+        /* INVOCA SERVICIO DE QUIOSCO PARA EMPEZAR A RECICLAR */
+        String ip = quioscoEntity.getIp();
+        String urlServerMaquina = "http://" + ip + ":8080";
+        String urlEndpoint = urlServerMaquina + environment.getProperty("maquina.service.url.cerrar");
+
+        var restTemplate = new RestTemplate();
+        try {
+            CerrarQuioscoDTO cerrarQuioscoDTO = new CerrarQuioscoDTO();
+            cerrarQuioscoDTO.setQuioscoId(idQuiosco);
+            cerrarQuioscoDTO.setUsuarioId(idUsuarioLogeado);
+            cerrarQuioscoDTO.setTipoPic(tipoQuiosco);
+            var headers = new HttpHeaders();
+            headers.set("Content-Type", "application/json");
+            var requestEntity = new HttpEntity<>(cerrarQuioscoDTO, headers);
+            restTemplate.postForObject(urlEndpoint, requestEntity, Void.class);
+        } catch (RestClientException e) {
+            log.error("Error al cerrar el quisco: {}", e.getMessage());
+            throw new IllegalArgumentException("No se pudo cerrar el quiosco. Intenta de nuevo.");
+        }
+
+        log.info("Termina cierre de quiosco");
+    }
+
+    @Override
+    public void abrirQuiosco(Long idQuiosco, Long idUsuarioLogueado) {
+        QuioscoEntity quioscoEntity = this.quioscoEntityRepository.findById(idQuiosco)
+                .orElseThrow(() -> new IllegalArgumentException("No encontramos la máquina en nuestro catálogo. Intenta de nuevo."));
+        int tipoQuiosco = quioscoEntity.getTipoArduino() ? TipoPicEnum.ARDUINO.getTipoPic() : TipoPicEnum.PLC.getTipoPic();
+        /* INVOCA SERVICIO DE QUIOSCO PARA EMPEZAR A RECICLAR */
+        String ip = quioscoEntity.getIp();
+        String urlServerMaquina = "http://" + ip + ":8080";
+        String urlEndpoint = urlServerMaquina + environment.getProperty("maquina.service.url.abrir");
+
+        var restTemplate = new RestTemplate();
+        try {
+            AbrirQuioscoDTO abrirQuioscoDTO = new AbrirQuioscoDTO();
+            abrirQuioscoDTO.setTipoPic(tipoQuiosco);
+            abrirQuioscoDTO.setQuioscoId(idQuiosco);
+            abrirQuioscoDTO.setUsuarioId(idUsuarioLogueado);
+            var headers = new HttpHeaders();
+            headers.set("Content-Type", "application/json");
+            var requestEntity = new HttpEntity<>(abrirQuioscoDTO, headers);
+            restTemplate.postForObject(urlEndpoint, requestEntity, Void.class);
+        } catch (RestClientException e) {
+            log.error("Error al abrir el quisco: {}", e.getMessage());
+            throw new IllegalArgumentException("No se pudo abrir el quiosco. Intenta de nuevo.");
+        }
+
+        log.info("Termina abrir de quiosco");
+    }
 }

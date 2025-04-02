@@ -241,4 +241,30 @@ public class ReciclajeController {
         }
         return new ResponseEntity<>(productos, HttpStatus.OK);
     }
+
+    @PreAuthorize("hasAuthority('ROLE_RECICLADOR')")
+    @Operation(summary = "Cerrar puerta quiosco.", description = "ROLE_RECICLADOR. Cierra puerta quiosco",
+            security = {@SecurityRequirement(name = "security_auth")})
+    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Operación exitosa.",
+            content = @Content(schema = @Schema(implementation = void.class)))})
+    @PostMapping(value = "/cerrar-quiosco")
+    public ResponseEntity<Void> cerrarQuiosco(@Valid @RequestBody CerrarQuioscoDTO cerrarQuioscoDTO) {
+        var idUsuarioLogueado = this.usuarioService.getUsuarioLogeado().getIdArqUsuario();
+        log.info("Cierra quiosco. Quiosco id {}", cerrarQuioscoDTO.getQuioscoId());
+        this.reciclajeService.cerrarQuiosco(idUsuarioLogueado, cerrarQuioscoDTO.getQuioscoId());
+        return new ResponseEntity<>(HttpStatus.OK);
+    }
+
+    @PreAuthorize("hasAuthority('ROLE_RECICLADOR')")
+    @Operation(summary = "Abrir puerta quiosco.", description = "ROLE_RECICLADOR. Abre puerta quiosco",
+            security = {@SecurityRequirement(name = "security_auth")})
+    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Operación exitosa.",
+            content = @Content(schema = @Schema(implementation = void.class)))})
+    @PostMapping(value = "/abrir-quiosco")
+    public ResponseEntity<Void> abrirQuiosco(@Valid @RequestBody AbrirQuioscoDTO abrirQuioscoDTO) {
+        var idUsuarioLogueado = this.usuarioService.getUsuarioLogeado().getIdArqUsuario();
+        log.info("Abre el quiosco. Quiosco id {}", abrirQuioscoDTO.getQuioscoId());
+        this.reciclajeService.abrirQuiosco(abrirQuioscoDTO.getQuioscoId(), idUsuarioLogueado);
+        return new ResponseEntity<>(HttpStatus.OK);
+    }
 }
