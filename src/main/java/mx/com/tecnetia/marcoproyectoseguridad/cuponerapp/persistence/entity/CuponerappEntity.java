@@ -32,4 +32,13 @@ public class CuponerappEntity {
     @Column(name = "puntos", nullable = false)
     private Integer puntos;
 
+    @Column(name = "descripcion")
+    private String descripcion;
+
+    @Column(name = "url")
+    private String url;
+
+    @Column(name = "idCompra")
+    private Integer idCompra;
+
 }

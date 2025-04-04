@@ -19,4 +19,6 @@ public interface CuponeraService {
     RespuestaCuponCanjeadoDTO canjear(RespuestaCuponeraDTO respuestaCuponeraDTO);
 
     List<CuponCanjeadoDTO> cuponesCanjeadosEntreFechas(LocalDate fechaInicial, LocalDate fechaFinal);
+
+    List<CuponDTO> cuponesByCategoriaAndEstado(Integer idCategoria, Integer idEstado);
 }

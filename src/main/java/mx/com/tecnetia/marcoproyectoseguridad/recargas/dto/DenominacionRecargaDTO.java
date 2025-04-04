@@ -16,6 +16,7 @@ import lombok.NoArgsConstructor;
 public class DenominacionRecargaDTO {
     private Integer idDenominacionRecargaDTO;
     private String nombreCompania;
+    private byte[] imgLogo;
     private Integer idProduct;
     private Integer monto;
     private Integer puntos;
