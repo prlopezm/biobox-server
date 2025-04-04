@@ -317,7 +317,9 @@ public class UsuarioServiceImpl implements UsuarioService {
                 !Objects.equals(usuarioLogeado.getIdArqUsuario(), usuarioConIgualNick.get().getIdArqUsuario())) {
             throw new IllegalArgumentException("Este alias de usuario ya está en uso. Por favor, pruebe con otro");
             //Existe 0 o más de 1 usuario con el teléfono que intentamos poner:
-        } else if (usuariosConIgualTelefono.size() != 1 || !listaTelefonosContieneUsuarioLogeado) {
+        } else if (!usuariosConIgualTelefono.isEmpty() && !listaTelefonosContieneUsuarioLogeado) {
+            throw new IllegalArgumentException("Este número de teléfono ya está en uso. Por favor, pruebe con otro");
+        }else if (usuariosConIgualTelefono.size() > 1) {
             throw new IllegalArgumentException("Este número de teléfono ya está en uso. Por favor, pruebe con otro");
         }
     }
