@@ -37,4 +37,6 @@ public class QuioscoEntity {
     @Basic
     @Column(name = "nombre")
     private String nombre;
+    @Column(name = "activo")
+    private boolean activo;
 }
