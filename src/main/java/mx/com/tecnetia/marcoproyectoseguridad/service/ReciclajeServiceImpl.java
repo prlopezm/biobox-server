@@ -13,12 +13,19 @@ import mx.com.tecnetia.marcoproyectoseguridad.persistence.hibernate.entity.*;
 import mx.com.tecnetia.marcoproyectoseguridad.persistence.hibernate.repository.*;
 import mx.com.tecnetia.marcoproyectoseguridad.persistence.hibernate.template.ProductoRecicladoJdbcRepository;
 import mx.com.tecnetia.marcoproyectoseguridad.util.CodigoRespuestaMaquinaEnum;
+import mx.com.tecnetia.orthogonal.ampq.ActualizaPuntosEventoProducer;
+import mx.com.tecnetia.orthogonal.ampq.eventos.EventoReciclaje;
+import mx.com.tecnetia.orthogonal.ampq.ReciclajeEventoProducer;
+import mx.com.tecnetia.orthogonal.ampq.mapper.ProductoRecicladoMapper;
+import mx.com.tecnetia.orthogonal.ampq.mapper.QuioscoMapper;
+import mx.com.tecnetia.orthogonal.ampq.mapper.UsuarioPuntosColorAcumuladoMapper;
 import mx.com.tecnetia.orthogonal.dto.MailDTO;
 import mx.com.tecnetia.orthogonal.persistence.hibernate.entity.ArqUsuarioEntity;
 import mx.com.tecnetia.orthogonal.persistence.hibernate.repository.ArqPropiedadEntityRepository;
-import mx.com.tecnetia.orthogonal.persistence.hibernate.repository.ArqUsuarioRepository;
+import mx.com.tecnetia.orthogonal.services.UsuarioService;
 import mx.com.tecnetia.orthogonal.utils.email.EmailOperationsThymeleafService;
 import mx.com.tecnetia.orthogonal.utils.quioscos.TipoPicEnum;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.core.env.Environment;
 import org.springframework.core.io.FileSystemResource;
@@ -59,7 +66,6 @@ public class ReciclajeServiceImpl implements ReciclajeService {
     private final ProductoReciclableEntityRepository productoReciclableEntityRepository;
     private final ProductoRecicladoEntityRepository productoRecicladoEntityRepository;
     private final ProductoRecicladoJdbcRepository productoRecicladoJdbcRepository;
-    private final ArqUsuarioRepository arqUsuarioRepository;
     private final FotoProductoRecicladoEntityRepository fotoProductoRecicladoEntityRepository;
     private final PesoProductoRecicladoEntityRepository pesoProductoRecicladoEntityRepository;
     private final ProductoReciclableColorPuntosEntityRepository productoReciclableColorPuntosEntityRepository;
@@ -78,6 +84,15 @@ public class ReciclajeServiceImpl implements ReciclajeService {
     private final SubMarcaEntityRepository subMarcaEntityRepository;
     private final FabricanteEntityRepository fabricanteEntityRepository;
     private final ColorEntityRepository colorEntityRepository;
+    private final ReciclajeEventoProducer reciclajeEventProducer;
+    private final ActualizaPuntosEventoProducer actualizaPuntosEventoProducer;
+    private final UsuarioService usuarioService;
+    private final ProductoRecicladoMapper productoRecicladoMapper;
+    private final UsuarioPuntosColorAcumuladoMapper usuarioPuntosColorAcumuladoMapper;
+    private final QuioscoMapper quioscoMapper;
+
+    @Value("${server.pais}")
+    private String pais;
 
     private void enviarMailLlenado(List<QuioscoEntity> quioscos) {
         String begin = "<tr>" +
@@ -665,8 +680,7 @@ public class ReciclajeServiceImpl implements ReciclajeService {
     //    @Transactional(readOnly = false)
     private ProductoRecicladoEntity guardarReciclaje(ProductoReciclableEntity productoReciclable, Long idUsuario, Long idQuiosco, Integer codigoRespuesta, boolean productoValido) {
         Integer puntos = 0;
-        ArqUsuarioEntity usuario = this.arqUsuarioRepository.findById(idUsuario)
-                .orElseThrow(() -> new IllegalArgumentException("El usuario no pudo encontrarse en la BD."));
+        ArqUsuarioEntity usuario = this.usuarioService.getUsuarioLogeado();
         log.info("Usuario reciclando: {}. El producto es válido: {}", usuario.getEmail(), productoValido);
         Long idProductoReciclable = productoReciclable != null ? productoReciclable.getIdProductoReciclable() : 0L;
 
@@ -675,6 +689,8 @@ public class ReciclajeServiceImpl implements ReciclajeService {
         productoReciclado.setIdProductoReciclable(idProductoReciclable);
         productoReciclado.setProductoReciclableByIdProductoReciclable(productoReciclable);
         productoReciclado.setArqUsuarioByIdArqUsuario(usuario);
+        var usuarioPuntosColorList = new ArrayList<UsuarioPuntosColorEntity>();
+        var puntosAcumuladosList = new ArrayList<UsuarioPuntosColorAcumuladoEntity>();
 
         if (codigoRespuesta.intValue() == CodigoRespuestaMaquinaEnum.RECICLAJE_EXITOSO.getCodigoRespuesta()) {
             log.info("Entrando a validar reciclaje Exitoso");
@@ -699,6 +715,7 @@ public class ReciclajeServiceImpl implements ReciclajeService {
                     log.info("El usuario {} se le dan {} puntos. Tenía antes: {}", usuario.getEmail(), puntos, usuarioPuntos.getPuntos());
                     usuarioPuntos.setPuntos(puntos);
                     this.usuarioPuntosColorEntityRepository.save(usuarioPuntos);
+                    usuarioPuntosColorList.add(usuarioPuntos);
                 } else {
                     log.info("Crear usuario puntos nuevo: " + productoReciclableColor.getPuntos() + " :: " + usuario.getIdArqUsuario() + " :: " + productoReciclableColor.getIdColor());
                     UsuarioPuntosColorEntity usuarioPuntos = new UsuarioPuntosColorEntity();
@@ -710,6 +727,7 @@ public class ReciclajeServiceImpl implements ReciclajeService {
                     colorEntity.setIdColor(productoReciclableColor.getIdColor());
                     usuarioPuntos.setColorByIdColor(colorEntity);
                     usuarioPuntos = this.usuarioPuntosColorEntityRepository.save(usuarioPuntos);
+                    usuarioPuntosColorList.add(usuarioPuntos);
                 }
 
                 //guardamos el histórico de movimientos
@@ -718,6 +736,7 @@ public class ReciclajeServiceImpl implements ReciclajeService {
                 usuarioPuntosAcumulado.setColorByIdColor(productoReciclableColor.getColorByIdColor());
                 usuarioPuntosAcumulado.setProductoRecicladoByIdProductoReciclado(productoReciclado);
                 this.usuarioPuntosColorAcumuladoEntityRepository.save(usuarioPuntosAcumulado);
+                puntosAcumuladosList.add(usuarioPuntosAcumulado);
             }
         } else {
             log.info("El reciclaje no fue exitoso");
@@ -731,7 +750,13 @@ public class ReciclajeServiceImpl implements ReciclajeService {
             productoRecicladoQuioscoEntity.setIdQuiosco(idQuiosco);
             productoRecicladoQuioscoEntity = this.productoRecicladoQuioscoEntityRepository.save(productoRecicladoQuioscoEntity);
         }
-
+        var usuarioPuntosColor = this.usuarioPuntosColorEntityRepository.findByIdArqUsuario(usuario.getIdArqUsuario());
+        var quiosco = this.quioscoEntityRepository.findById(idQuiosco).orElse(new QuioscoEntity());
+        var evento = new EventoReciclaje(pais, productoRecicladoMapper.fromEntity(productoReciclado),
+                quioscoMapper.fromEntity(quiosco));
+        evento.getProductoReciclado().setUsuarioPuntosColorAcumulados(puntosAcumuladosList.stream().map(usuarioPuntosColorAcumuladoMapper::fromEntity).toList());
+        reciclajeEventProducer.send(evento);
+        actualizaPuntosEventoProducer.send(usuarioPuntosColor.orElseThrow(() -> new IllegalArgumentException("No se encontro los puntos")));
         return productoReciclado;
     }
 

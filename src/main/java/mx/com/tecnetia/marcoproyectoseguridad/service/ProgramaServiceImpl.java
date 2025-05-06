@@ -5,6 +5,9 @@ import java.sql.Timestamp;
 import java.util.HashMap;
 import java.util.Optional;
 
+import mx.com.tecnetia.marcoproyectoseguridad.util.FechasUtil;
+import mx.com.tecnetia.orthogonal.ampq.ActualizaPuntosEventoProducer;
+import mx.com.tecnetia.orthogonal.services.UsuarioService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,33 +31,32 @@ import mx.com.tecnetia.marcoproyectoseguridad.persistence.hibernate.repository.U
 import mx.com.tecnetia.marcoproyectoseguridad.persistence.hibernate.repository.UsuarioPuntosColorEntityRepository;
 import mx.com.tecnetia.marcoproyectoseguridad.util.Constantes;
 import mx.com.tecnetia.marcoproyectoseguridad.util.ConstantesProgramaLealtad;
-import mx.com.tecnetia.marcoproyectoseguridad.util.FechasUtil;
 import mx.com.tecnetia.orthogonal.dto.MailDTO;
-import mx.com.tecnetia.orthogonal.persistence.hibernate.repository.ArqUsuarioRepository;
 import mx.com.tecnetia.orthogonal.utils.email.EmailOperationsThymeleafService;
 
 @Service
 @RequiredArgsConstructor
 @Log4j2
 public class ProgramaServiceImpl implements ProgramaService {
-	
-	private final ArqUsuarioRepository arqUsuarioRepository;
+
 	private final ServicioUsadoEntityRepository servicioUsadoEntityRepository;	
 	private final EmailOperationsThymeleafService emailOperationsThymeleafService;
 	private final ProgramaProntipagoEntityRepository programaProntipagoEntityRepository;
 	private final UsuarioPuntosColorEntityRepository usuarioPuntosColorEntityRepository;
 	private final ProgramaCodigosDescuentoEntityRepository programaCodigosDescuentoEntityRepository;
 	private final ProgramaPuntosRequeridosEntityRepository programaPuntosRequeridosEntityRepository;
-	private final UsuarioPuntosColorConsumidosEntityRepository usuarioPuntosColorConsumidosEntityRepository;	
+	private final UsuarioPuntosColorConsumidosEntityRepository usuarioPuntosColorConsumidosEntityRepository;
+	private final UsuarioService usuarioService;
+	private final ActualizaPuntosEventoProducer actualizaPuntosEventoProducer;
 	@Value("${server.servlet.context-path}")
 	private String context;
 	@Value("${server.servlet.context-path-images}")
 	private String images;
-	
+
 	@Transactional
 	@Synchronized
-	public HashMap<String, Object> validaCanje(Long idPuntosRequeridos, Long idUsuario) {	
-		HashMap<String, Object> variablesDeSalida = new HashMap<String, Object>();	
+	public HashMap<String, Object> validaCanje(Long idPuntosRequeridos, Long idUsuario) {
+		HashMap<String, Object> variablesDeSalida = new HashMap<String, Object>();
 		Long idCategoria = 0L;
 		boolean canjeUnico = false;
 		boolean usuarioTieneCodigo = false;
@@ -66,48 +68,48 @@ public class ProgramaServiceImpl implements ProgramaService {
 		int puntosCoste = 0;
 		int puntosLimiteInferior = 0;
 		int puntosLimiteSuperior = 0;
-		
+
 		Optional<UsuarioPuntosColorEntity> usuarioPuntosOpt = this.usuarioPuntosColorEntityRepository.findByIdArqUsuario(idUsuario);
 		if(usuarioPuntosOpt.isPresent()) {
-			puntosUsuario = usuarioPuntosOpt.get().getPuntos(); 
+			puntosUsuario = usuarioPuntosOpt.get().getPuntos();
 		}else {
 			throw new IllegalArgumentException("Usuario Incorrecto");
 		}
-		
+
 		//Obtenemos programa
-    	ProgramaProntipagoEntity programaProntipagoEntity = this.programaProntipagoEntityRepository
-    			.findByPuntosRequeridos(new ProgramaPuntosRequeridosEntity().setIdProgramaPuntosRequeridos(idPuntosRequeridos))
-                .orElseThrow(() -> new IllegalArgumentException("Programa Incorrecto"));
-    	
-    	    puntosCoste = programaProntipagoEntity.getPuntosRequeridos().getPuntosCoste();
-    	    puntosLimiteInferior = programaProntipagoEntity.getPuntosRequeridos().getPuntosLimiteInferior();
-    	    puntosLimiteSuperior = programaProntipagoEntity.getPuntosRequeridos().getPuntosLimiteSuperior();
-	    	idCategoria = programaProntipagoEntity.getCategoriaProntipago().getIdCategoriaProntipago();
-	    	canjeUnico = programaProntipagoEntity.getCategoriaProntipago().isCanjeUnico();
-	    	vigenciaInicio = programaProntipagoEntity.getCategoriaProntipago().getVigenciaInicio();
-	    	vigenciaFin = programaProntipagoEntity.getCategoriaProntipago().getVigenciaFin();
-    	
-	    	//Validamos vigencia
-	    	categoriaVigente = FechasUtil.validaVigencia(vigenciaInicio, vigenciaFin);
-	    	programaVigente = FechasUtil.validaVigencia(programaProntipagoEntity.getVigenciaInicio(),programaProntipagoEntity.getVigenciaFin());
-	    	
-	    	//Buscamos si el usuario ya tiene un canje de esta categoria
-	    	Optional<ProgramaCodigosDescuentoEntity> codigosDescuentoOpt = programaCodigosDescuentoEntityRepository
-    																   .findByIdArqUsuarioAndIdCategoria(idUsuario, idCategoria);
-	    	if(codigosDescuentoOpt.isPresent()) {
-	    		usuarioTieneCodigo = true;    		
-	    	}
-	    	
-	    	variablesDeSalida.put(ConstantesProgramaLealtad.KEY_CATEGORIA_CANJE_UNICO, canjeUnico);
-	    	variablesDeSalida.put(ConstantesProgramaLealtad.KEY_USUARIO_TIENE_CODIGO, usuarioTieneCodigo);
-	    	variablesDeSalida.put(ConstantesProgramaLealtad.KEY_CATEGORIA_VIGENTE, categoriaVigente);
-	    	variablesDeSalida.put(ConstantesProgramaLealtad.KEY_PROGRAMA_VIGENTE, programaVigente);
-	    	variablesDeSalida.put(ConstantesProgramaLealtad.KEY_PUNTOS_USUARIO, puntosUsuario);
-	    	variablesDeSalida.put(ConstantesProgramaLealtad.KEY_PUNTOS_COSTE_SUBPROGRAMA, puntosCoste);
-	    	variablesDeSalida.put(ConstantesProgramaLealtad.KEY_PUNTOS_LIMITE_INFERIOR, puntosLimiteInferior);
-	    	variablesDeSalida.put(ConstantesProgramaLealtad.KEY_PUNTOS_LIMITE_SUPERIOR, puntosLimiteSuperior);
-    	
-    	return variablesDeSalida;    	
+		ProgramaProntipagoEntity programaProntipagoEntity = this.programaProntipagoEntityRepository
+				.findByPuntosRequeridos(new ProgramaPuntosRequeridosEntity().setIdProgramaPuntosRequeridos(idPuntosRequeridos))
+				.orElseThrow(() -> new IllegalArgumentException("Programa Incorrecto"));
+
+		puntosCoste = programaProntipagoEntity.getPuntosRequeridos().getPuntosCoste();
+		puntosLimiteInferior = programaProntipagoEntity.getPuntosRequeridos().getPuntosLimiteInferior();
+		puntosLimiteSuperior = programaProntipagoEntity.getPuntosRequeridos().getPuntosLimiteSuperior();
+		idCategoria = programaProntipagoEntity.getCategoriaProntipago().getIdCategoriaProntipago();
+		canjeUnico = programaProntipagoEntity.getCategoriaProntipago().isCanjeUnico();
+		vigenciaInicio = programaProntipagoEntity.getCategoriaProntipago().getVigenciaInicio();
+		vigenciaFin = programaProntipagoEntity.getCategoriaProntipago().getVigenciaFin();
+
+		//Validamos vigencia
+		categoriaVigente = FechasUtil.validaVigencia(vigenciaInicio, vigenciaFin);
+		programaVigente = FechasUtil.validaVigencia(programaProntipagoEntity.getVigenciaInicio(),programaProntipagoEntity.getVigenciaFin());
+
+		//Buscamos si el usuario ya tiene un canje de esta categoria
+		Optional<ProgramaCodigosDescuentoEntity> codigosDescuentoOpt = programaCodigosDescuentoEntityRepository
+				.findByIdArqUsuarioAndIdCategoria(idUsuario, idCategoria);
+		if(codigosDescuentoOpt.isPresent()) {
+			usuarioTieneCodigo = true;
+		}
+
+		variablesDeSalida.put(ConstantesProgramaLealtad.KEY_CATEGORIA_CANJE_UNICO, canjeUnico);
+		variablesDeSalida.put(ConstantesProgramaLealtad.KEY_USUARIO_TIENE_CODIGO, usuarioTieneCodigo);
+		variablesDeSalida.put(ConstantesProgramaLealtad.KEY_CATEGORIA_VIGENTE, categoriaVigente);
+		variablesDeSalida.put(ConstantesProgramaLealtad.KEY_PROGRAMA_VIGENTE, programaVigente);
+		variablesDeSalida.put(ConstantesProgramaLealtad.KEY_PUNTOS_USUARIO, puntosUsuario);
+		variablesDeSalida.put(ConstantesProgramaLealtad.KEY_PUNTOS_COSTE_SUBPROGRAMA, puntosCoste);
+		variablesDeSalida.put(ConstantesProgramaLealtad.KEY_PUNTOS_LIMITE_INFERIOR, puntosLimiteInferior);
+		variablesDeSalida.put(ConstantesProgramaLealtad.KEY_PUNTOS_LIMITE_SUPERIOR, puntosLimiteSuperior);
+
+		return variablesDeSalida;
 	}
 	
 	@Transactional
@@ -160,6 +162,8 @@ public class ProgramaServiceImpl implements ProgramaService {
             variablesDeSalida.put(ConstantesProgramaLealtad.KEY_LOGO_2_CATEGORIA, programaProntipagoEntity.getCategoriaProntipago().getUrlLogo2());
             variablesDeSalida.put(ConstantesProgramaLealtad.KEY_CATEGORIA_PORTAL, programaProntipagoEntity.getCategoriaProntipago().getUrlPortal());
             variablesDeSalida.put(ConstantesProgramaLealtad.KEY_ID_PROGRAMA, programaProntipagoEntity.getIdProgramaProntipago());
+
+		    actualizaPuntosEventoProducer.send(usuarioPuntos);
             
             return variablesDeSalida;
 	}
@@ -214,8 +218,7 @@ public class ProgramaServiceImpl implements ProgramaService {
 		       
 		String urlCategoria = urlPortal;
 		
-		String emailUsuario = this.arqUsuarioRepository.findById(idUsuario)
-                .orElseThrow(() -> new IllegalArgumentException("No existe en la BD el usuario: " + idUsuario)).getEmail();
+		String emailUsuario = this.usuarioService.getUsuarioLogeado().getEmail();
 				
         var model = new HashMap<String, Object>();        
         model.put("descuento", descuento);

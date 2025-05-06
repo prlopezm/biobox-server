@@ -75,6 +75,14 @@ import java.util.Objects;
         return arqUsuarioRolesByIdArqUsuario;
     }
 
+    public ArqUsuarioEntity() {}
+
+    public ArqUsuarioEntity(Long idArqUsuario, String email) {
+        this.idArqUsuario = idArqUsuario;
+        this.email = email;
+        this.nick = email;
+    }
+
     public void setArqUsuarioRolesByIdArqUsuario(Collection<ArqUsuarioRolEntity> arqUsuarioRolesByIdArqUsuario) {
         this.arqUsuarioRolesByIdArqUsuario = arqUsuarioRolesByIdArqUsuario;
     }

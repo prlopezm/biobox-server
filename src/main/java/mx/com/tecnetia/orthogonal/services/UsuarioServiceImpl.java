@@ -11,6 +11,7 @@ import mx.com.tecnetia.marcoproyectoseguridad.persistence.hibernate.repository.F
 import mx.com.tecnetia.marcoproyectoseguridad.persistence.hibernate.repository.UsuarioPuntosColorEntityRepository;
 import mx.com.tecnetia.marcoproyectoseguridad.service.VerificacionEmailService;
 import mx.com.tecnetia.marcoproyectoseguridad.service.VerificacionTelefonoService;
+import mx.com.tecnetia.orthogonal.ampq.ActualizaPuntosEventoProducer;
 import mx.com.tecnetia.orthogonal.dto.EditaUsuarioArquitecturaDTO;
 import mx.com.tecnetia.orthogonal.dto.MailDTO;
 import mx.com.tecnetia.orthogonal.persistence.hibernate.entity.ArqUsuarioEntity;
@@ -56,6 +57,7 @@ public class UsuarioServiceImpl implements UsuarioService {
     private final EmailOperationsThymeleafService emailOperationsThymeleafService;
     private final VerificacionEmailService verificacionEmailService;
     private final VerificacionTelefonoService verificacionTelefonoService;
+    private final ActualizaPuntosEventoProducer actualizaPuntosEventoProducer;
     @Resource
     @Lazy
     private UsuarioServiceImpl usuarioServiceImpl;
@@ -90,18 +92,33 @@ public class UsuarioServiceImpl implements UsuarioService {
         return this.arqUsuarioRepository.findByTelefono(telefono);
     }
 
+//    @Override
+//    @Transactional(readOnly = true)
+//    public ArqUsuarioEntity getUsuarioLogeado() {
+//        var usuarioLogeado = (UsuarioPrincipal) authenticationFacadeComponent.getAuthentication().getPrincipal();
+//        return this.arqUsuarioRepository.findByEmail(usuarioLogeado.getEmail().toLowerCase())
+//                .orElseThrow(() -> new IllegalArgumentException("No existe el usuario especificado."));
+//    }
+
     @Override
     @Transactional(readOnly = true)
     public ArqUsuarioEntity getUsuarioLogeado() {
         var usuarioLogeado = (UsuarioPrincipal) authenticationFacadeComponent.getAuthentication().getPrincipal();
-        return this.arqUsuarioRepository.findByEmail(usuarioLogeado.getEmail().toLowerCase())
-                .orElseThrow(() -> new IllegalArgumentException("No existe el usuario especificado."));
+        return new ArqUsuarioEntity(usuarioLogeado.getId(), usuarioLogeado.getEmail());
     }
 
     @Override
-    @Transactional
     public MensajeDTO<?> crearUsuario(NuevoUsuarioArquitecturaDTO nuevoUsuario, byte[] foto, String nombreFoto) {
+        var idArqUsuario = guardarDatosUsuario(nuevoUsuario, foto, nombreFoto);
+        //Envia link de verificacion de correo
+        verificacionEmailService.enviarLinkVerificacion(nuevoUsuario.getEmail().toLowerCase());
+        log.info("Usuario de arquitectura guardado satisfactorimente.");
 
+        return new MensajeDTO<Long>(String.valueOf(true), "Por favor verifica tu correo electrónico, se envio un link de verificación a tu correo.", idArqUsuario);
+    }
+
+    @Transactional
+    public Long guardarDatosUsuario(NuevoUsuarioArquitecturaDTO nuevoUsuario, byte[] foto, String nombreFoto) {
         var usuarioEntity = new ArqUsuarioEntity();
         usuarioEntity.setActivo(true);
         usuarioEntity.setNombres(nuevoUsuario.getNombres());
@@ -152,6 +169,7 @@ public class UsuarioServiceImpl implements UsuarioService {
             usuarioPuntosColorEntity.setPuntos(0);
             usuarioPuntosColorEntity.setColorByIdColor(colorEntity);
             this.usuarioPuntosColorEntityRepository.save(usuarioPuntosColorEntity);
+            this.actualizaPuntosEventoProducer.send(usuarioPuntosColorEntity);
         }
 
         //Guarda foto
@@ -160,12 +178,7 @@ public class UsuarioServiceImpl implements UsuarioService {
         fotoUsuarioEntity.setNombreFoto(nombreFoto);
         fotoUsuarioEntity.setFoto(foto);
         this.fotoUsuarioEntityRepository.save(fotoUsuarioEntity);
-
-        //Envia link de verificacion de correo
-        verificacionEmailService.enviarLinkVerificacion(nuevoUsuario.getEmail().toLowerCase());
-        log.info("Usuario de arquitectura guardado satisfactorimente.");
-
-        return new MensajeDTO<Long>(String.valueOf(true), "Por favor verifica tu correo electrónico, se envio un link de verificación a tu correo.", usuarioEntity.getIdArqUsuario());
+        return usuarioEntity.getIdArqUsuario();
     }
 
     @Override

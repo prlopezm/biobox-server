@@ -1,9 +1,14 @@
 package mx.com.tecnetia.orthogonal.security.jwt;
 
 import java.io.IOException;
+import java.util.List;
+import java.util.stream.Collectors;
 
+import mx.com.tecnetia.orthogonal.security.UsuarioPrincipal;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -29,9 +34,15 @@ public class JwtTokenFilter extends OncePerRequestFilter {
             String token = getToken(req);
             if (token != null && jwtProvider.validateToken(token)) {
                 String nombreUsuario = jwtProvider.getNombreUsuarioFromToken(token);
-                UserDetails userDetails = userDetailsServiceImpl.loadUserByUsername(nombreUsuario);
-                UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(userDetails, null,
-                        userDetails.getAuthorities());
+                var authoritiesList = jwtProvider.getAuthorities(token);
+                var idUsuario = jwtProvider.getIdUsuarioFromToken(token);
+                var telefono = jwtProvider.getTelefonoUsuarioFromToken(token);
+                List<GrantedAuthority> authorities = authoritiesList.stream()
+                        .map(rol -> new SimpleGrantedAuthority((String) rol))
+                        .collect(Collectors.toList());
+                UsernamePasswordAuthenticationToken auth =
+                        new UsernamePasswordAuthenticationToken(new UsuarioPrincipal(idUsuario, nombreUsuario, nombreUsuario, nombreUsuario, null, telefono, authorities), null,
+                        authorities);
                 SecurityContextHolder.getContext().setAuthentication(auth);
             }
         } catch (Exception e) {

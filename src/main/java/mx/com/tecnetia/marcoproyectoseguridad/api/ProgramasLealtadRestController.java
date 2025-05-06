@@ -133,5 +133,20 @@ public class ProgramasLealtadRestController {
 
         return new ResponseEntity<>(mensaje, HttpStatus.OK);
     }
+
+    @PreAuthorize("hasAuthority('ROLE_RECICLADOR')")
+    @Operation(summary = "Canjear Programa Lealtad. LISTO", description = "ROLE_RECICLADOR. Realiza el canje del programa de lealtad y realiza el descuento de puntos correspondientes del cliente",
+            security = {@SecurityRequirement(name = "security_auth")})
+    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Operación exitosa.",
+            content = @Content(schema = @Schema(implementation = MensajeDTO.class)))})
+    @GetMapping(value = "/canjear")
+    public ResponseEntity<MensajeDTO<?>> canjearPuntos(@RequestParam("sku") @NotEmpty @Parameter(description = "SKU del programa a canjear.") String sku,
+                                                       @RequestParam(name = "monto") BigDecimal monto,
+                                                       @RequestParam(name = "idPuntosRequeridos") Long idPuntosRequeridos) {
+        var idUsuarioLogueado = this.usuarioService.getUsuarioLogeado().getIdArqUsuario();
+        MensajeDTO<?> mensaje = this.bacardiService.canjearCodigoDescuento(sku, idPuntosRequeridos, idUsuarioLogueado);
+
+        return new ResponseEntity<>(mensaje, HttpStatus.OK);
+    }
     
 }

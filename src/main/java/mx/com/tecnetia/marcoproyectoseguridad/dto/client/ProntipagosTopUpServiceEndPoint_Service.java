@@ -31,7 +31,8 @@ public class ProntipagosTopUpServiceEndPoint_Service
         WebServiceException e = null;
         try {
 //            url = new URL("file:/Users/prlopezm/Documents/pgm/prontipagos/ProntipagosEndpoint.wsdl");
-            //url = new URL("file:/home/cassio/IdeaProjects/prontipagos/ProntipagosEndpoint.wsdl");
+            // url = new URL("file:/home/cassio/IdeaProjects/prontipagos/ProntipagosEndpoint.wsdl");
+            //url = new URL("file:/opt/pics/ProntipagosEndpoint.wsdl");
             url = new URL("file:C:/pics/ProntipagosEndpoint.wsdl");
             //url = new URL("file:/Users/carlosruiz/Documents/Público/ProntipagosEndpoint.wsdl");
         } catch (MalformedURLException ex) {
