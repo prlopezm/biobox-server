@@ -38,5 +38,7 @@ public interface UsuarioService {
     String estatusVerificacion(ArqUsuarioEntity usuario);
     
     boolean registroConcluido(ArqUsuarioEntity usuario);
+
+    public Long guardarDatosUsuario(NuevoUsuarioArquitecturaDTO nuevoUsuario, byte[] foto, String nombreFoto);
         
 }

@@ -78,6 +78,7 @@ public class GlobalExceptionsManager extends ResponseEntityExceptionHandler {
         HttpHeaders headers = new HttpHeaders();
         headers.set(MENSAJE, ex.getLocalizedMessage());
         log.error("RuntimeException: {}", ex.getLocalizedMessage() == null ? MSG_GENERICO : ex.getLocalizedMessage());
+        ex.printStackTrace();
         return handleExceptionInternal(ex, body, headers, HttpStatus.INTERNAL_SERVER_ERROR, request);
     }
 

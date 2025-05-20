@@ -1,7 +1,6 @@
 package mx.com.tecnetia.marcoproyectoseguridad.oxxo.service;
 
 import com.google.gson.Gson;
-import jakarta.annotation.Resource;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
@@ -13,10 +12,10 @@ import mx.com.tecnetia.marcoproyectoseguridad.oxxo.persistence.entity.OpcionCanj
 import mx.com.tecnetia.marcoproyectoseguridad.oxxo.persistence.repository.CanjeOxxoEntityRepository;
 import mx.com.tecnetia.marcoproyectoseguridad.oxxo.persistence.repository.OpcionCanjeOxxoEntityRepository;
 import mx.com.tecnetia.marcoproyectoseguridad.persistence.hibernate.repository.UsuarioPuntosColorEntityRepository;
+import mx.com.tecnetia.orthogonal.ampq.ActualizaPuntosEventoProducer;
 import mx.com.tecnetia.orthogonal.services.UsuarioService;
 import mx.com.tecnetia.orthogonal.utils.email.EmailOperationsThymeleafService;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -46,6 +45,7 @@ public class CanjePuntosOxxoServiceImpl implements CanjePuntosOxxoService {
     private final CanjeOxxoEntityRepository canjeOxxoEntityRepository;
     private final EmailOperationsThymeleafService emailOperationsThymeleafService;
     private final UsuarioPuntosColorEntityRepository usuarioPuntosColorEntityRepository;
+    private final ActualizaPuntosEventoProducer actualizaPuntosEventoProducer;
 
     @Override
     @Transactional
@@ -124,5 +124,6 @@ public class CanjePuntosOxxoServiceImpl implements CanjePuntosOxxoService {
         }
         usuarioPuntos.setPuntos(usuarioPuntos.getPuntos() - puntosDescontar);
         this.usuarioPuntosColorEntityRepository.save(usuarioPuntos);
+        this.actualizaPuntosEventoProducer.send(usuarioPuntos);
     }
 }

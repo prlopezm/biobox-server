@@ -18,14 +18,16 @@ public class UsuarioPrincipal implements UserDetails {
     private String nombreUsuario;
     private String email;
     private String password;
+    private String telefono;
     private Collection<? extends GrantedAuthority> authorities;
 
-    public UsuarioPrincipal(Long id, String nombre, String nombreUsuario, String email, String password, Collection<? extends GrantedAuthority> authorities) {
+    public UsuarioPrincipal(Long id, String nombre, String nombreUsuario, String email, String password, String telefono, Collection<? extends GrantedAuthority> authorities) {
         this.id = id;
         this.nombre = nombre;
         this.nombreUsuario = nombreUsuario;
         this.email = email;
         this.password = password;
+        this.telefono = telefono;
         this.authorities = authorities;
     }
 
@@ -35,7 +37,7 @@ public class UsuarioPrincipal implements UserDetails {
                 .collect(Collectors.toList());
 //        .getArqRolAplicacionEntity().getNombre()
         return new UsuarioPrincipal(usuario.getIdArqUsuario(), usuario.getNombres(), usuario.getNick(),
-                usuario.getEmail(), usuario.getPassw(), authorities);
+                usuario.getEmail(), usuario.getPassw(), usuario.getTelefono(), authorities);
     }
 
     public Long getId() {
@@ -48,6 +50,10 @@ public class UsuarioPrincipal implements UserDetails {
 
     public String getEmail() {
         return email;
+    }
+
+    public String getTelefono() {
+        return telefono;
     }
 
     @Override

@@ -1,9 +1,13 @@
 package mx.com.tecnetia.orthogonal.security.jwt;
 
+import java.security.Key;
 import java.util.Date;
+import java.util.List;
 
 import javax.crypto.SecretKey;
 
+import io.jsonwebtoken.io.Decoders;
+import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
@@ -22,13 +26,18 @@ import mx.com.tecnetia.orthogonal.security.UsuarioPrincipal;
 @Log4j2
 public class JwtProvider {
 
+//    @PostConstruct
+//    public void init() {
+//        this.key = io.jsonwebtoken.security.Keys.secretKeyFor(SignatureAlgorithm.HS512);
+//    }
+
     @PostConstruct
     public void init() {
-        this.key = io.jsonwebtoken.security.Keys.secretKeyFor(SignatureAlgorithm.HS512);
+        this.key = getSingnInKey();
     }
 
     //    private static final Logger logger = LoggerFactory.getLogger(JwtProvider.class);
-    private SecretKey key;
+    private Key key;
 
     @Value("${jwt.secret}")
     private String secret;
@@ -50,6 +59,26 @@ public class JwtProvider {
         var usuario = Jwts.parserBuilder().setSigningKey(this.key).build().parseClaimsJws(token).getBody().getSubject();
         log.info("Usuario en el token: {}", usuario);
         return usuario;
+    }
+
+    public Long getIdUsuarioFromToken(String token) {
+        var idUsuario = Jwts.parserBuilder().setSigningKey(this.key).build().parseClaimsJws(token).getBody().get("idUsuario");
+        return Long.valueOf(idUsuario.toString());
+    }
+
+    public String getTelefonoUsuarioFromToken(String token) {
+        var telefono = Jwts.parserBuilder().setSigningKey(this.key).build().parseClaimsJws(token).getBody().get("telefono");
+        return telefono.toString();
+    }
+
+    public List<?> getAuthorities(String token) {
+        var authorities = Jwts.parserBuilder().setSigningKey(this.key).build().parseClaimsJws(token).getBody().get("roles");
+        return (List<?>) authorities;
+    }
+
+    private Key getSingnInKey() {
+        byte[] keyBytes = Decoders.BASE64.decode(secret);
+        return Keys.hmacShaKeyFor(keyBytes);
     }
 
     public boolean validateToken(String token) {

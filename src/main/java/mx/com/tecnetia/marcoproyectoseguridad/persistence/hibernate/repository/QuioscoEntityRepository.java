@@ -18,6 +18,7 @@ public interface QuioscoEntityRepository extends JpaRepository<QuioscoEntity, Lo
             select new mx.com.tecnetia.marcoproyectoseguridad.dto.catalogo.QuioscoDTO
             (ent.idQuiosco, ent.direccion, ent.latitud, ent.longitud, ent.nombre)
             from QuioscoEntity ent
+            where ent.activo=true
             """)
     List<QuioscoDTO> getAllDTO();
 

@@ -2,15 +2,15 @@ package mx.com.tecnetia.marcoproyectoseguridad.cuponerapp.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
-import mx.com.tecnetia.marcoproyectoseguridad.cuponerapp.dto.CuponCanjeadoDTO;
-import mx.com.tecnetia.marcoproyectoseguridad.cuponerapp.dto.CuponDTO;
-import mx.com.tecnetia.marcoproyectoseguridad.cuponerapp.dto.RespuestaCuponCanjeadoDTO;
-import mx.com.tecnetia.marcoproyectoseguridad.cuponerapp.dto.RespuestaCuponeraDTO;
+import mx.com.tecnetia.marcoproyectoseguridad.cuponerapp.dto.*;
+import mx.com.tecnetia.marcoproyectoseguridad.cuponerapp.persistence.entity.CuponerappCategoriaEstadoEntity;
 import mx.com.tecnetia.marcoproyectoseguridad.cuponerapp.persistence.entity.CuponerappEntity;
 import mx.com.tecnetia.marcoproyectoseguridad.cuponerapp.persistence.entity.CuponerappUsadaEntity;
+import mx.com.tecnetia.marcoproyectoseguridad.cuponerapp.persistence.repository.CuponerappCategoriaEstadoEntityRepository;
 import mx.com.tecnetia.marcoproyectoseguridad.cuponerapp.persistence.repository.CuponerappEntityRepository;
 import mx.com.tecnetia.marcoproyectoseguridad.cuponerapp.persistence.repository.CuponerappUsadaEntityRepository;
 import mx.com.tecnetia.marcoproyectoseguridad.persistence.hibernate.repository.UsuarioPuntosColorEntityRepository;
+import mx.com.tecnetia.orthogonal.ampq.ActualizaPuntosEventoProducer;
 import mx.com.tecnetia.orthogonal.services.UsuarioService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,6 +19,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * @author Pablo Rafael López Martínez <prlopezm@gmail.com>
@@ -32,6 +33,9 @@ public class CuponeraServiceImpl implements CuponeraService {
     private final UsuarioService usuarioService;
     private final UsuarioPuntosColorEntityRepository usuarioPuntosColorEntityRepository;
     private final CuponerappUsadaEntityRepository cuponerappUsadaEntityRepository;
+
+    private final ActualizaPuntosEventoProducer actualizaPuntosEventoProducer;
+    private final CuponerappCategoriaEstadoEntityRepository cuponerappCategoriaEstadoEntityRepository;
 
     @Override
     @Transactional(readOnly = true)
@@ -70,6 +74,13 @@ public class CuponeraServiceImpl implements CuponeraService {
 
     }
 
+    @Override
+    public List<CuponDTO> cuponesByCategoriaAndEstado(Integer idCategoria, Integer idEstado) {
+        List<CuponerappCategoriaEstadoEntity> list = cuponerappCategoriaEstadoEntityRepository.findByCategoriaIdCategoriaAndEstadoIdEstado(idCategoria, idEstado);
+        return list.stream().map(CuponDTO::new).collect(Collectors.toList());
+    }
+
+
     private CuponCanjeadoDTO fromCuponera(CuponerappUsadaEntity cuponerappUsadaEntity) {
         return new CuponCanjeadoDTO()
                 .setCodigoQr(cuponerappUsadaEntity.getCodigoQr())
@@ -90,7 +101,10 @@ public class CuponeraServiceImpl implements CuponeraService {
         }
         var puntosRestantes = usuarioPuntos.getPuntos() - puntosDescontar;
         usuarioPuntos.setPuntos(puntosRestantes);
-        this.usuarioPuntosColorEntityRepository.save(usuarioPuntos);
+        var usuarioPuntosColor = this.usuarioPuntosColorEntityRepository.save(usuarioPuntos);
+
+        actualizaPuntosEventoProducer.send(usuarioPuntosColor);
+
         return puntosRestantes;
     }
 

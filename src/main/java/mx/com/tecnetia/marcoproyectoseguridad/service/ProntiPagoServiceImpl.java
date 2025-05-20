@@ -9,6 +9,8 @@ import java.util.Optional;
 
 import javax.xml.ws.BindingProvider;
 
+import mx.com.tecnetia.orthogonal.ampq.ActualizaPuntosEventoProducer;
+import mx.com.tecnetia.orthogonal.services.UsuarioService;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -56,7 +58,6 @@ public class ProntiPagoServiceImpl implements ProntiPagoService {
     private final UsuarioPuntosColorEntityRepository usuarioPuntosColorEntityRepository;
     private final ProgramaProntipagoEntityRepository programaProntipagoEntityRepository;
     private final ArqPropiedadEntityRepository arqPropiedadEntityRepository;
-    private final ArqUsuarioRepository arqUsuarioRepository;
     private final ConversionEntityRepository conversionEntityRepository;
     private final Environment environment;
     private final ProntipagosTopUpServiceEndPoint_Service prontipagosTopUpServiceEndPoint_service;
@@ -64,6 +65,8 @@ public class ProntiPagoServiceImpl implements ProntiPagoService {
     private final UsuarioPuntosColorConsumidosEntityRepository usuarioPuntosColorConsumidosEntityRepository;
     private final ColorEntityRepository colorEntityRepository;
     private final ProgramaCategoriaProntipagoEntityRepository categoriaProntipagoEntityRepository;
+	private final UsuarioService usuarioService;
+	private final ActualizaPuntosEventoProducer actualizaPuntosEventoProducer;
 
     @Override
     @Transactional(readOnly = false)
@@ -151,8 +154,7 @@ public class ProntiPagoServiceImpl implements ProntiPagoService {
 		boolean categoriaVigente = false;
 		boolean programaVigente = false;
 		
-        String telefonoUsuario = this.arqUsuarioRepository.findById(idUsuario)
-                .orElseThrow(() -> new IllegalArgumentException("No existe en la BD el usuario: " + idUsuario)).getTelefono();
+        String telefonoUsuario = this.usuarioService.getUsuarioLogeado().getTelefono();
         ProgramaProntipagoEntity programaProntipagoEntity = this.programaProntipagoEntityRepository.findByCodigo(sku)
                 .orElseThrow(() -> new IllegalArgumentException("No existe en la BD el programa prontipago de ese sku: " + sku));
 
@@ -229,12 +231,14 @@ public class ProntiPagoServiceImpl implements ProntiPagoService {
 		                    UsuarioPuntosColorEntity usuarioPuntos = usuarioPuntosOpt.get();
 		                    usuarioPuntos.setPuntos(usuarioPuntos.getPuntos() - color.getPuntos().intValue());
 		                    this.usuarioPuntosColorEntityRepository.save(usuarioPuntos);
+							this.actualizaPuntosEventoProducer.send(usuarioPuntos);
 		                }else{
 		                    UsuarioPuntosColorEntity usuarioPuntos = new UsuarioPuntosColorEntity();
 		                    usuarioPuntos.setPuntos(color.getPuntos().intValue() * -1);
 		                    usuarioPuntos.setIdArqUsuario(idUsuario);
 		                    usuarioPuntos.setColorByIdColor(colorEntity.get());
 		                    usuarioPuntos = this.usuarioPuntosColorEntityRepository.save(usuarioPuntos);
+							this.actualizaPuntosEventoProducer.send(usuarioPuntos);
 		                }
 		
 		                //guardamos el histórico de movimientos

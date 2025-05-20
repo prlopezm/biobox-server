@@ -26,6 +26,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Base64;
+import java.util.List;
 
 @CrossOrigin(origins = "*")
 @RestController
@@ -191,6 +192,79 @@ public class ReciclajeController {
     @GetMapping("/llenado-maquinas")
     public ResponseEntity<Void> validarLlenadoMaquinas() {
         this.reciclajeService.validaLlenadoMaquinas();
+        return new ResponseEntity<>(HttpStatus.OK);
+    }
+
+    @PreAuthorize("hasAuthority('ROLE_QUIOSCO')")
+    @Operation(summary = "Recibe la respuesta del proceso de reciclaje, de una máquina. LISTO.",
+            security = {@SecurityRequirement(name = "security_auth")})
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Operación exitosa.", content = @Content(schema =
+            @Schema(implementation = void.class)))})
+    @PostMapping(value = "/v2/recicla-producto-quiosco")
+    public ResponseEntity<Void> reciclaProductoQuioscoV2(@Valid @RequestBody ReciclaProductoQuioscoResponseV2DTO reciclaProductoQuioscoDTO) {
+        log.info("End Point /v2/recicla-producto-quiosco. BarCode:{}, idProducto: {}, respuesta: {}, peso: {}",
+                reciclaProductoQuioscoDTO.getBarCode(), reciclaProductoQuioscoDTO.getIdsProducto(), reciclaProductoQuioscoDTO.getCodigoRespuesta()
+                , reciclaProductoQuioscoDTO.getPeso());
+        if (reciclaProductoQuioscoDTO.getPeso() != null) {
+            log.info("Se recicla desde un PLC");
+            this.reciclajeService.reciclaProductoEnQuioscoPlc(reciclaProductoQuioscoDTO.getIdUsuario(),
+                    reciclaProductoQuioscoDTO.getIdsProducto(),
+                    reciclaProductoQuioscoDTO.getIdQuiosco(),
+                    reciclaProductoQuioscoDTO.getCodigoRespuesta(),
+                    reciclaProductoQuioscoDTO.getPeso());
+        } else {
+            log.info("Se recicla desde un Arduino");
+            this.reciclajeService.reciclaProductoEnQuioscoArduino(reciclaProductoQuioscoDTO.getIdUsuario(),
+                    reciclaProductoQuioscoDTO.getIdsProducto(),
+                    reciclaProductoQuioscoDTO.getIdQuiosco(),
+                    reciclaProductoQuioscoDTO.getCodigoRespuesta(),
+                    reciclaProductoQuioscoDTO.getBarCode());
+        }
+        return new ResponseEntity<>(HttpStatus.CREATED);
+    }
+
+    @PreAuthorize("hasAuthority('ROLE_RECICLADOR')")
+    @Operation(summary = "Identificar producto. LISTO", description = "ROLE_RECICLADOR. Identifica si existe un producto por medio de su codigo de barras",
+            security = {@SecurityRequirement(name = "security_auth")})
+    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Operación exitosa.",
+            content = @Content(schema = @Schema(implementation = ProductoAReciclarDTO.class)))})
+    @GetMapping(value = "/v2/bar-code")
+    public ResponseEntity<List<ProductoAReciclarDTO>> identificarBarCodeV2(@RequestParam("barCode") @NotEmpty @Parameter(description = "Codigo de barras del producto.") String barCodes,
+                                                                           @RequestParam(name = "idQuiosco") Long idQuiosco) {
+        List<ProductoAReciclarDTO> productos = null;
+        var idUsuarioLogueado = this.usuarioService.getUsuarioLogeado().getIdArqUsuario();
+        if (idQuiosco == 0) {
+            productos = this.reciclajeService.getListaProductosAReciclar(barCodes, idUsuarioLogueado);
+        } else {
+            productos = this.reciclajeService.enviarProcesosDeReciclajeEnQuiosco(idUsuarioLogueado, barCodes, idQuiosco);
+        }
+        return new ResponseEntity<>(productos, HttpStatus.OK);
+    }
+
+    @PreAuthorize("hasAuthority('ROLE_RECICLADOR')")
+    @Operation(summary = "Cerrar puerta quiosco.", description = "ROLE_RECICLADOR. Cierra puerta quiosco",
+            security = {@SecurityRequirement(name = "security_auth")})
+    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Operación exitosa.",
+            content = @Content(schema = @Schema(implementation = void.class)))})
+    @PostMapping(value = "/cerrar-quiosco")
+    public ResponseEntity<Void> cerrarQuiosco(@Valid @RequestBody CerrarQuioscoDTO cerrarQuioscoDTO) {
+        var idUsuarioLogueado = this.usuarioService.getUsuarioLogeado().getIdArqUsuario();
+        log.info("Cierra quiosco. Quiosco id {}", cerrarQuioscoDTO.getQuioscoId());
+        this.reciclajeService.cerrarQuiosco(idUsuarioLogueado, cerrarQuioscoDTO.getQuioscoId());
+        return new ResponseEntity<>(HttpStatus.OK);
+    }
+
+    @PreAuthorize("hasAuthority('ROLE_RECICLADOR')")
+    @Operation(summary = "Abrir puerta quiosco.", description = "ROLE_RECICLADOR. Abre puerta quiosco",
+            security = {@SecurityRequirement(name = "security_auth")})
+    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Operación exitosa.",
+            content = @Content(schema = @Schema(implementation = void.class)))})
+    @PostMapping(value = "/abrir-quiosco")
+    public ResponseEntity<Void> abrirQuiosco(@Valid @RequestBody AbrirQuioscoDTO abrirQuioscoDTO) {
+        var idUsuarioLogueado = this.usuarioService.getUsuarioLogeado().getIdArqUsuario();
+        log.info("Abre el quiosco. Quiosco id {}", abrirQuioscoDTO.getQuioscoId());
+        this.reciclajeService.abrirQuiosco(abrirQuioscoDTO.getQuioscoId(), idUsuarioLogueado);
         return new ResponseEntity<>(HttpStatus.OK);
     }
 }

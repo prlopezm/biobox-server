@@ -13,7 +13,7 @@ public interface DenominacionRecargaCelEntityRepository extends JpaRepository<De
 
     @Query("""
             select new mx.com.tecnetia.marcoproyectoseguridad.recargas.dto.DenominacionRecargaDTO(
-                        ent.id, comp.nombre, comp.idProduct, ent.monto, ent.puntos
+                        ent.id, comp.nombre, comp.imgLogo, comp.idProduct, ent.monto, ent.puntos
                         )
             from DenominacionRecargaCelEntity ent
                 join ent.companiaCel comp

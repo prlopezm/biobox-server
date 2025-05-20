@@ -10,6 +10,7 @@ import mx.com.tecnetia.marcoproyectoseguridad.recargas.persistence.entity.Denomi
 import mx.com.tecnetia.marcoproyectoseguridad.recargas.persistence.entity.DenominacionRecargaCelUsadaEntity;
 import mx.com.tecnetia.marcoproyectoseguridad.recargas.persistence.repository.DenominacionRecargaCelEntityRepository;
 import mx.com.tecnetia.marcoproyectoseguridad.recargas.persistence.repository.DenominacionRecargaCelUsadaEntityRepository;
+import mx.com.tecnetia.orthogonal.ampq.ActualizaPuntosEventoProducer;
 import mx.com.tecnetia.orthogonal.services.UsuarioService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,6 +30,7 @@ public class RecargaServiceImpl implements RecargaService {
     private final UsuarioService usuarioService;
     private final UsuarioPuntosColorEntityRepository usuarioPuntosColorEntityRepository;
     private final DenominacionRecargaCelUsadaEntityRepository denominacionRecargaCelUsadaEntityRepository;
+    private final ActualizaPuntosEventoProducer actualizaPuntosEventoProducer;
 
     @Override
     @Transactional(readOnly = true)
@@ -73,6 +75,7 @@ public class RecargaServiceImpl implements RecargaService {
         var puntosRestantes = usuarioPuntos.getPuntos() - puntosDescontar;
         usuarioPuntos.setPuntos(puntosRestantes);
         this.usuarioPuntosColorEntityRepository.save(usuarioPuntos);
+        this.actualizaPuntosEventoProducer.send(usuarioPuntos);
         return puntosRestantes;
     }
 }
