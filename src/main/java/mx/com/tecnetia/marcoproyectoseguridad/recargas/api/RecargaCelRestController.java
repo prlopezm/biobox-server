@@ -15,6 +15,7 @@ import mx.com.tecnetia.marcoproyectoseguridad.cuponerapp.dto.RespuestaCuponCanje
 import mx.com.tecnetia.marcoproyectoseguridad.recargas.dto.DenominacionRecargaDTO;
 import mx.com.tecnetia.marcoproyectoseguridad.recargas.dto.RecargaDTO;
 import mx.com.tecnetia.marcoproyectoseguridad.recargas.service.RecargaService;
+import mx.com.tecnetia.orthogonal.services.UsuarioService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
@@ -34,6 +35,7 @@ import java.util.List;
 @Tag(name = "Recargas", description = "Servicios de recarga de celulares")
 public class RecargaCelRestController {
     private final RecargaService recargaService;
+    private final UsuarioService usuarioService;
 
     @PreAuthorize("isAuthenticated()")
     @Operation(summary = "Denominaciones", security = {@SecurityRequirement(name = "security_auth")})
@@ -41,7 +43,8 @@ public class RecargaCelRestController {
             content = {@Content(array = @ArraySchema(schema = @Schema(implementation = DenominacionRecargaDTO.class)))})})
     @GetMapping("/denominaciones")
     public ResponseEntity<List<DenominacionRecargaDTO>> getAllDenominaciones() {
-        var ret = this.recargaService.getAllDenominacionRecargaCel();
+        var user = this.usuarioService.getUsuarioLogeado();
+        var ret = this.recargaService.getAllDenominacionRecargaCel(user.getIdArqUsuario());
         return ResponseEntity.ok().body(ret);
     }
 

@@ -77,10 +77,15 @@ import java.util.Objects;
 
     public ArqUsuarioEntity() {}
 
-    public ArqUsuarioEntity(Long idArqUsuario, String email) {
+    public ArqUsuarioEntity(Long idArqUsuario, String email, String telefono) {
         this.idArqUsuario = idArqUsuario;
         this.email = email;
         this.nick = email;
+        this.telefono = telefono;
+    }
+
+    public ArqUsuarioEntity(Long idArqUsuario) {
+        this.idArqUsuario = idArqUsuario;
     }
 
     public void setArqUsuarioRolesByIdArqUsuario(Collection<ArqUsuarioRolEntity> arqUsuarioRolesByIdArqUsuario) {

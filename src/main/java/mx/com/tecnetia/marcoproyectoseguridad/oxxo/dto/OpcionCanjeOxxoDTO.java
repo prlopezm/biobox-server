@@ -20,4 +20,6 @@ public class OpcionCanjeOxxoDTO {
     private int id;
     @NotBlank
     private String nombre;
+    private Integer puntosCanjear;
+
 }

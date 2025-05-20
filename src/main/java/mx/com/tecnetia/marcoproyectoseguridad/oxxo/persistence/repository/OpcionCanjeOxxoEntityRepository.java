@@ -12,7 +12,7 @@ import java.util.List;
 public interface OpcionCanjeOxxoEntityRepository extends JpaRepository<OpcionCanjeOxxoEntity, Integer> {
 
     @Query("""
-            select new mx.com.tecnetia.marcoproyectoseguridad.oxxo.dto.OpcionCanjeOxxoDTO(ent.id, ent.nombre)
+            select new mx.com.tecnetia.marcoproyectoseguridad.oxxo.dto.OpcionCanjeOxxoDTO(ent.id, ent.nombre, ent.puntosCanjear)
             from OpcionCanjeOxxoEntity ent
             """)
     List<OpcionCanjeOxxoDTO> getAllDTO();

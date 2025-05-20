@@ -27,6 +27,9 @@ public class CompaniaCelEntity {
     @Column(name = "id_product", nullable = false)
     private Integer idProduct;
 
+    @Column(name = "img_logo")
+    private byte[] imgLogo;
+
     @OneToMany(mappedBy = "companiaCel")
     private Set<DenominacionRecargaCelEntity> denominacionesRecargaCels = new LinkedHashSet<>();
 

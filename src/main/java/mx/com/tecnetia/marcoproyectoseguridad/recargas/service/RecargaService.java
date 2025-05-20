@@ -11,6 +11,6 @@ import java.util.List;
  * @version 1.0 2025-01-23
  */
 public interface RecargaService {
-    List<DenominacionRecargaDTO> getAllDenominacionRecargaCel();
+    List<DenominacionRecargaDTO> getAllDenominacionRecargaCel(Long idArqUsuario);
     RespuestaCuponCanjeadoDTO registrarRecarga(RecargaDTO recarga);
 }

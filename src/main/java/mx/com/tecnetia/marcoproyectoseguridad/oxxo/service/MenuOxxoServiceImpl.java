@@ -4,9 +4,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import mx.com.tecnetia.marcoproyectoseguridad.oxxo.dto.MenuOxxoDTO;
 import mx.com.tecnetia.marcoproyectoseguridad.oxxo.persistence.entity.OxxoMemberIdEntity;
-import mx.com.tecnetia.marcoproyectoseguridad.oxxo.persistence.repository.CanjeOxxoEntityRepository;
 import mx.com.tecnetia.marcoproyectoseguridad.oxxo.persistence.repository.OpcionCanjeOxxoEntityRepository;
 import mx.com.tecnetia.marcoproyectoseguridad.oxxo.persistence.repository.OxxoMemberIdEntityRepository;
+import mx.com.tecnetia.marcoproyectoseguridad.persistence.hibernate.repository.UsuarioPuntosColorEntityRepository;
 import mx.com.tecnetia.orthogonal.services.UsuarioService;
 import mx.com.tecnetia.orthogonal.utils.propiedades.PropiedadComponent;
 import org.springframework.beans.factory.annotation.Value;
@@ -28,6 +28,7 @@ public class MenuOxxoServiceImpl implements MenuOxxoService {
     private final OpcionCanjeOxxoEntityRepository opcionCanjeOxxoEntityRepository;
     private final OxxoMemberIdEntityRepository oxxoMemberIdEntityRepository;
     private final OxxoCommonsService oxxoCommonsService;
+    private final UsuarioPuntosColorEntityRepository usuarioPuntosColorEntityRepository;
 
     @Value("${OXXO_LEYENDA}")
     private String leyendaPropiedad;

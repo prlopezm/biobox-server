@@ -680,8 +680,8 @@ public class ReciclajeServiceImpl implements ReciclajeService {
     //    @Transactional(readOnly = false)
     private ProductoRecicladoEntity guardarReciclaje(ProductoReciclableEntity productoReciclable, Long idUsuario, Long idQuiosco, Integer codigoRespuesta, boolean productoValido) {
         Integer puntos = 0;
-        ArqUsuarioEntity usuario = this.usuarioService.getUsuarioLogeado();
-        log.info("Usuario reciclando: {}. El producto es válido: {}", usuario.getEmail(), productoValido);
+        ArqUsuarioEntity usuario = new ArqUsuarioEntity(idUsuario);
+        log.info("Usuario reciclando: {}. El producto es válido: {}", usuario.getIdArqUsuario(), productoValido);
         Long idProductoReciclable = productoReciclable != null ? productoReciclable.getIdProductoReciclable() : 0L;
 
         ProductoRecicladoEntity productoReciclado = new ProductoRecicladoEntity();
@@ -712,7 +712,7 @@ public class ReciclajeServiceImpl implements ReciclajeService {
                         //puntos = usuarioPuntos.getPuntos();
                         puntos = usuarioPuntos.getPuntos() + productoReciclableColor.getPuntos();
                     }
-                    log.info("El usuario {} se le dan {} puntos. Tenía antes: {}", usuario.getEmail(), puntos, usuarioPuntos.getPuntos());
+                    log.info("El usuario {} se le dan {} puntos. Tenía antes: {}", usuario.getIdArqUsuario(), puntos, usuarioPuntos.getPuntos());
                     usuarioPuntos.setPuntos(puntos);
                     this.usuarioPuntosColorEntityRepository.save(usuarioPuntos);
                     usuarioPuntosColorList.add(usuarioPuntos);
@@ -720,7 +720,7 @@ public class ReciclajeServiceImpl implements ReciclajeService {
                     log.info("Crear usuario puntos nuevo: " + productoReciclableColor.getPuntos() + " :: " + usuario.getIdArqUsuario() + " :: " + productoReciclableColor.getIdColor());
                     UsuarioPuntosColorEntity usuarioPuntos = new UsuarioPuntosColorEntity();
                     puntos = productoReciclableColor.getPuntos();
-                    log.info("Al usuario {} se le dan {} puntos. No tenía puntos.", usuario.getEmail(), puntos);
+                    log.info("Al usuario {} se le dan {} puntos. No tenía puntos.", usuario.getIdArqUsuario(), puntos);
                     usuarioPuntos.setPuntos(puntos);
                     usuarioPuntos.setArqUsuarioByIdArqUsuario(usuario);
                     ColorEntity colorEntity = new ColorEntity();

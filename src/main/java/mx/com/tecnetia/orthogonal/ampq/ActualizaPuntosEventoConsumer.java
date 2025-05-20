@@ -20,8 +20,13 @@ public class ActualizaPuntosEventoConsumer {
     public void receive(String message) {
         try {
             log.info("Actualizando puntos usuario");
+            log.info("Evento json {}", message);
             ObjectMapper mapper = new ObjectMapper();
             var evento = mapper.readValue(message, ActualizaPuntosEvento.class);
+            log.info("Datos del evento: idUsuario {} Puntos {} idColor {}",
+                    evento.getUsuarioPuntosColorEntities().getIdArqUsuario(),
+                    evento.getUsuarioPuntosColorEntities().getPuntos(),
+                    evento.getUsuarioPuntosColorEntities().getIdColor());
             usuarioPuntosColorService.guardarPuntos(evento);
             log.info("Se actualizo los puntos");
         } catch (Exception ex) {

@@ -38,7 +38,7 @@ public class ActualizaPuntosEventoProducer {
             this.template.convertAndSend(exchange, "", mapper.writeValueAsString(actualizaPuntosEvento));
             log.info("Enviando mensaje reciclaje");
         } catch (JsonProcessingException e) {
-            log.error("Error envio evento descuento puntos {}",  e.getMessage());
+            log.error("Error envio evento actualiza puntos {}",  e.getMessage());
         }
     }
 }

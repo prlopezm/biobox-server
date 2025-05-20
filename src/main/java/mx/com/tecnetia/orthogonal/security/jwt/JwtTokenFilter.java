@@ -2,6 +2,7 @@ package mx.com.tecnetia.orthogonal.security.jwt;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import mx.com.tecnetia.orthogonal.security.UsuarioPrincipal;
@@ -54,7 +55,7 @@ public class JwtTokenFilter extends OncePerRequestFilter {
     private String getToken(HttpServletRequest request) {
         String authReq = request.getHeader("Authorization");
         if (authReq != null && authReq.startsWith("Bearer "))
-            return authReq.replace("Bearer ", "");
+            return authReq.replace("Bearer ", "").trim();
         return null;
     }
 }
