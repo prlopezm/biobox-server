@@ -36,7 +36,6 @@ public class CuponeraServiceImpl implements CuponeraService {
     private final CuponerappCategoriaEstadoEntityRepository cuponerappCategoriaEstadoEntityRepository;
 
     private final ActualizaPuntosEventoProducer actualizaPuntosEventoProducer;
-    private final CuponerappCategoriaEstadoEntityRepository cuponerappCategoriaEstadoEntityRepository;
 
     @Override
     @Transactional(readOnly = true)
