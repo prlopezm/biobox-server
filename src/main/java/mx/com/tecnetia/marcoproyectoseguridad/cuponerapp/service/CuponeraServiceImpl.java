@@ -33,6 +33,7 @@ public class CuponeraServiceImpl implements CuponeraService {
     private final UsuarioService usuarioService;
     private final UsuarioPuntosColorEntityRepository usuarioPuntosColorEntityRepository;
     private final CuponerappUsadaEntityRepository cuponerappUsadaEntityRepository;
+    private final CuponerappCategoriaEstadoEntityRepository cuponerappCategoriaEstadoEntityRepository;
 
     private final ActualizaPuntosEventoProducer actualizaPuntosEventoProducer;
     private final CuponerappCategoriaEstadoEntityRepository cuponerappCategoriaEstadoEntityRepository;
