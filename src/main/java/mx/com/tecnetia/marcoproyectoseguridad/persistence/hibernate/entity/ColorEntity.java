@@ -32,4 +32,10 @@ public class ColorEntity {
     @Column(name = "url_foto_2")
     private String urlFoto2;
 
+    public ColorEntity(Integer idColor) {
+        this.idColor = idColor;
+    }
+
+    public ColorEntity() {}
+
 }

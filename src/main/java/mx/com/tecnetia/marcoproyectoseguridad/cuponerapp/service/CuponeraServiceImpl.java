@@ -10,6 +10,7 @@ import mx.com.tecnetia.marcoproyectoseguridad.cuponerapp.persistence.repository.
 import mx.com.tecnetia.marcoproyectoseguridad.cuponerapp.persistence.repository.CuponerappEntityRepository;
 import mx.com.tecnetia.marcoproyectoseguridad.cuponerapp.persistence.repository.CuponerappUsadaEntityRepository;
 import mx.com.tecnetia.marcoproyectoseguridad.persistence.hibernate.repository.UsuarioPuntosColorEntityRepository;
+import mx.com.tecnetia.orthogonal.ampq.ActualizaPuntosEventoProducer;
 import mx.com.tecnetia.orthogonal.services.UsuarioService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,6 +33,9 @@ public class CuponeraServiceImpl implements CuponeraService {
     private final UsuarioService usuarioService;
     private final UsuarioPuntosColorEntityRepository usuarioPuntosColorEntityRepository;
     private final CuponerappUsadaEntityRepository cuponerappUsadaEntityRepository;
+    private final CuponerappCategoriaEstadoEntityRepository cuponerappCategoriaEstadoEntityRepository;
+
+    private final ActualizaPuntosEventoProducer actualizaPuntosEventoProducer;
     private final CuponerappCategoriaEstadoEntityRepository cuponerappCategoriaEstadoEntityRepository;
 
     @Override
@@ -98,7 +102,10 @@ public class CuponeraServiceImpl implements CuponeraService {
         }
         var puntosRestantes = usuarioPuntos.getPuntos() - puntosDescontar;
         usuarioPuntos.setPuntos(puntosRestantes);
-        this.usuarioPuntosColorEntityRepository.save(usuarioPuntos);
+        var usuarioPuntosColor = this.usuarioPuntosColorEntityRepository.save(usuarioPuntos);
+
+        actualizaPuntosEventoProducer.send(usuarioPuntosColor);
+
         return puntosRestantes;
     }
 

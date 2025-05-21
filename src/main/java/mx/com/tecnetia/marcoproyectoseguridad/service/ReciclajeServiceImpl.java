@@ -13,12 +13,19 @@ import mx.com.tecnetia.marcoproyectoseguridad.persistence.hibernate.entity.*;
 import mx.com.tecnetia.marcoproyectoseguridad.persistence.hibernate.repository.*;
 import mx.com.tecnetia.marcoproyectoseguridad.persistence.hibernate.template.ProductoRecicladoJdbcRepository;
 import mx.com.tecnetia.marcoproyectoseguridad.util.CodigoRespuestaMaquinaEnum;
+import mx.com.tecnetia.orthogonal.ampq.ActualizaPuntosEventoProducer;
+import mx.com.tecnetia.orthogonal.ampq.eventos.EventoReciclaje;
+import mx.com.tecnetia.orthogonal.ampq.ReciclajeEventoProducer;
+import mx.com.tecnetia.orthogonal.ampq.mapper.ProductoRecicladoMapper;
+import mx.com.tecnetia.orthogonal.ampq.mapper.QuioscoMapper;
+import mx.com.tecnetia.orthogonal.ampq.mapper.UsuarioPuntosColorAcumuladoMapper;
 import mx.com.tecnetia.orthogonal.dto.MailDTO;
 import mx.com.tecnetia.orthogonal.persistence.hibernate.entity.ArqUsuarioEntity;
 import mx.com.tecnetia.orthogonal.persistence.hibernate.repository.ArqPropiedadEntityRepository;
-import mx.com.tecnetia.orthogonal.persistence.hibernate.repository.ArqUsuarioRepository;
+import mx.com.tecnetia.orthogonal.services.UsuarioService;
 import mx.com.tecnetia.orthogonal.utils.email.EmailOperationsThymeleafService;
 import mx.com.tecnetia.orthogonal.utils.quioscos.TipoPicEnum;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.core.env.Environment;
 import org.springframework.core.io.FileSystemResource;
@@ -36,12 +43,9 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.nio.file.Files;
-import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.Timestamp;
@@ -62,7 +66,6 @@ public class ReciclajeServiceImpl implements ReciclajeService {
     private final ProductoReciclableEntityRepository productoReciclableEntityRepository;
     private final ProductoRecicladoEntityRepository productoRecicladoEntityRepository;
     private final ProductoRecicladoJdbcRepository productoRecicladoJdbcRepository;
-    private final ArqUsuarioRepository arqUsuarioRepository;
     private final FotoProductoRecicladoEntityRepository fotoProductoRecicladoEntityRepository;
     private final PesoProductoRecicladoEntityRepository pesoProductoRecicladoEntityRepository;
     private final ProductoReciclableColorPuntosEntityRepository productoReciclableColorPuntosEntityRepository;
@@ -81,6 +84,15 @@ public class ReciclajeServiceImpl implements ReciclajeService {
     private final SubMarcaEntityRepository subMarcaEntityRepository;
     private final FabricanteEntityRepository fabricanteEntityRepository;
     private final ColorEntityRepository colorEntityRepository;
+    private final ReciclajeEventoProducer reciclajeEventProducer;
+    private final ActualizaPuntosEventoProducer actualizaPuntosEventoProducer;
+    private final UsuarioService usuarioService;
+    private final ProductoRecicladoMapper productoRecicladoMapper;
+    private final UsuarioPuntosColorAcumuladoMapper usuarioPuntosColorAcumuladoMapper;
+    private final QuioscoMapper quioscoMapper;
+
+    @Value("${server.pais}")
+    private String pais;
 
     private void enviarMailLlenado(List<QuioscoEntity> quioscos) {
         String begin = "<tr>" +
@@ -209,6 +221,22 @@ public class ReciclajeServiceImpl implements ReciclajeService {
             return productoOpt.get();
         }
 
+        return null;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<ProductoAReciclarDTO> getListaProductosAReciclar(String barCodes, Long idUsuarioLogeado) {
+        List<String> codes = Arrays.stream(barCodes.split(",")).map(String::trim).toList();
+        if (this.usuarioPuedeReciclar(idUsuarioLogeado)) {
+            List<ProductoAReciclarDTO> productos = this.productoReciclableEntityRepository.getProductosByBarCodes(codes);
+            if (productos.isEmpty()) {
+                log.error("Error al encontrar los códigos de barras en la BD: " + codes);
+                var msg = "No encontramos los códigos de barras " + codes + " en nuestro catálogo de productos a reciclar. Intenta de nuevo.";
+                throw new IllegalArgumentException(msg);
+            }
+            return productos;
+        }
         return null;
     }
 
@@ -349,6 +377,67 @@ public class ReciclajeServiceImpl implements ReciclajeService {
             log.info("Termina envio de reciclaje");
 
             return producto;
+        }
+
+        return null;
+    }
+
+    @Override
+    @Transactional
+    public List<ProductoAReciclarDTO> enviarProcesosDeReciclajeEnQuiosco(Long idUsuarioLogeado, String barCodes, Long idQuiosco) {
+        log.info("Tomando quiosco V2 *********************");
+        this.tomarQuiosco(idQuiosco, idUsuarioLogeado);
+
+        if (this.usuarioPuedeReciclar(idUsuarioLogeado)) {
+
+            QuioscoEntity quioscoEntity = this.quioscoEntityRepository.findById(idQuiosco)
+                    .orElseThrow(() -> new IllegalArgumentException("No encontramos la máquina en nuestro catálogo. Intenta de nuevo."));
+            int tipoQuiosco = quioscoEntity.getTipoArduino() ? TipoPicEnum.ARDUINO.getTipoPic() : TipoPicEnum.PLC.getTipoPic();
+
+            List<ProductoAReciclarDTO> productos = new ArrayList<>();
+            List<String> codes = Arrays.stream(barCodes.split(",")).map(String::trim).toList();
+            for (String code: codes) {
+                Optional<ProductoAReciclarDTO> productoOptional = this.productoReciclableEntityRepository.getProductoByBarCode(code);
+                ProductoAReciclarDTO producto = null;
+                if (productoOptional.isPresent()) {
+                    producto = productoOptional.get();
+                }
+
+                if (productoOptional.isEmpty()) {
+                    log.warn("El código de barras {} no está dado de alta en la BD", code);
+                    reciclajeServiceImpl.enviaEmailSKUNotFound(code);
+                    var ent = this.guardaNuevoProductoReciclableNOTFOUND(code);
+                    producto = getProductoAReciclarDTO(ent);
+                }
+                productos.add(producto);
+            }
+
+            /* INVOCA SERVICIO DE QUIOSCO PARA EMPEZAR A RECICLAR */
+            String ip = quioscoEntity.getIp();
+            String urlServerMaquina = "http://" + ip + ":8080";
+            String urlEndpoint = urlServerMaquina + environment.getProperty("maquina.service.url.reciclar");
+
+            var restTemplate = new RestTemplate();
+            try {
+                ReciclaProductoQuioscoRequestV2DTO reciclaProductoQuioscoRequestDTO = new ReciclaProductoQuioscoRequestV2DTO();
+                reciclaProductoQuioscoRequestDTO.setIdQuiosco(idQuiosco);
+                reciclaProductoQuioscoRequestDTO.setBarCode(barCodes);
+                reciclaProductoQuioscoRequestDTO.setIdUsuario(idUsuarioLogeado);
+                reciclaProductoQuioscoRequestDTO.setIdsProducto(productos.stream().map(ProductoAReciclarDTO::getIdProducto).toList());
+                reciclaProductoQuioscoRequestDTO.setMoverCharolaALaDerecha(true);
+                reciclaProductoQuioscoRequestDTO.setTipoPic(tipoQuiosco);
+                var headers = new HttpHeaders();
+                headers.set("Content-Type", "application/json");
+                var requestEntity = new HttpEntity<>(reciclaProductoQuioscoRequestDTO, headers);
+                restTemplate.postForObject(urlEndpoint, requestEntity, Void.class);
+            } catch (RestClientException e) {
+                log.error("Error al enviar el proceso de reciclaje a la máquina: {}", e.getMessage());
+                throw new IllegalArgumentException("No se pudo iniciar el proceso de reciclaje en la máquina. Intenta de nuevo.");
+            }
+
+            log.info("Termina envio de reciclaje");
+
+            return productos;
         }
 
         return null;
@@ -496,6 +585,37 @@ public class ReciclajeServiceImpl implements ReciclajeService {
         log.info("Termina guardado de reciclaje con foto.");
     }
 
+    @Override
+    @Transactional
+    public void reciclaProductoEnQuioscoArduino(@NotNull Long idUsuario, @NotNull List<Long> idsProducto, @NotNull Long idQuiosco,
+                                                Integer codigoRespuesta, @NotBlank String barcode) {
+
+        var productoValido = true;
+        String label = "";
+        Long idProductoReciclado = 0L;
+        ProductoRecicladoEntity productoReciclado = null;
+
+        for (Long id:  idsProducto) {
+            var productoReciclableOptional = this.productoReciclableEntityRepository.findById(id);
+            if (productoReciclableOptional.isPresent()) {
+                var productoReciclable = productoReciclableOptional.get();
+                label = productoReciclable.getSubMarcaByIdSubMarca().getNombre();
+                productoReciclado = this.guardarReciclaje(productoReciclable, idUsuario, idQuiosco, codigoRespuesta, productoValido);
+                idProductoReciclado = productoReciclado.getIdProductoReciclado();
+
+                try {
+                    log.info("Guardando producto. idProductoReciclado: {}, barcode: {}, label: {}", idProductoReciclado, barcode, label);
+                    productoReciclado.setExitoso(productoValido);
+                    this.productoRecicladoEntityRepository.save(productoReciclado);
+                } catch (Exception e) {
+                    log.error(e);
+                }
+                log.info("Termina guardado de reciclaje en Arduino.");
+            }
+        }
+    }
+
+
     private ProductoReciclableEntity guardaNuevoProductoReciclableNOTFOUND(String barCode) {
         var entOpt = this.productoReciclableEntityRepository.findBySku(barCode);
         if (entOpt.isPresent()) {
@@ -560,9 +680,8 @@ public class ReciclajeServiceImpl implements ReciclajeService {
     //    @Transactional(readOnly = false)
     private ProductoRecicladoEntity guardarReciclaje(ProductoReciclableEntity productoReciclable, Long idUsuario, Long idQuiosco, Integer codigoRespuesta, boolean productoValido) {
         Integer puntos = 0;
-        ArqUsuarioEntity usuario = this.arqUsuarioRepository.findById(idUsuario)
-                .orElseThrow(() -> new IllegalArgumentException("El usuario no pudo encontrarse en la BD."));
-        log.info("Usuario reciclando: {}. El producto es válido: {}", usuario.getEmail(), productoValido);
+        ArqUsuarioEntity usuario = new ArqUsuarioEntity(idUsuario);
+        log.info("Usuario reciclando: {}. El producto es válido: {}", usuario.getIdArqUsuario(), productoValido);
         Long idProductoReciclable = productoReciclable != null ? productoReciclable.getIdProductoReciclable() : 0L;
 
         ProductoRecicladoEntity productoReciclado = new ProductoRecicladoEntity();
@@ -570,6 +689,8 @@ public class ReciclajeServiceImpl implements ReciclajeService {
         productoReciclado.setIdProductoReciclable(idProductoReciclable);
         productoReciclado.setProductoReciclableByIdProductoReciclable(productoReciclable);
         productoReciclado.setArqUsuarioByIdArqUsuario(usuario);
+        var usuarioPuntosColorList = new ArrayList<UsuarioPuntosColorEntity>();
+        var puntosAcumuladosList = new ArrayList<UsuarioPuntosColorAcumuladoEntity>();
 
         if (codigoRespuesta.intValue() == CodigoRespuestaMaquinaEnum.RECICLAJE_EXITOSO.getCodigoRespuesta()) {
             log.info("Entrando a validar reciclaje Exitoso");
@@ -591,20 +712,22 @@ public class ReciclajeServiceImpl implements ReciclajeService {
                         //puntos = usuarioPuntos.getPuntos();
                         puntos = usuarioPuntos.getPuntos() + productoReciclableColor.getPuntos();
                     }
-                    log.info("El usuario {} se le dan {} puntos. Tenía antes: {}", usuario.getEmail(), puntos, usuarioPuntos.getPuntos());
+                    log.info("El usuario {} se le dan {} puntos. Tenía antes: {}", usuario.getIdArqUsuario(), puntos, usuarioPuntos.getPuntos());
                     usuarioPuntos.setPuntos(puntos);
                     this.usuarioPuntosColorEntityRepository.save(usuarioPuntos);
+                    usuarioPuntosColorList.add(usuarioPuntos);
                 } else {
                     log.info("Crear usuario puntos nuevo: " + productoReciclableColor.getPuntos() + " :: " + usuario.getIdArqUsuario() + " :: " + productoReciclableColor.getIdColor());
                     UsuarioPuntosColorEntity usuarioPuntos = new UsuarioPuntosColorEntity();
                     puntos = productoReciclableColor.getPuntos();
-                    log.info("Al usuario {} se le dan {} puntos. No tenía puntos.", usuario.getEmail(), puntos);
+                    log.info("Al usuario {} se le dan {} puntos. No tenía puntos.", usuario.getIdArqUsuario(), puntos);
                     usuarioPuntos.setPuntos(puntos);
                     usuarioPuntos.setArqUsuarioByIdArqUsuario(usuario);
                     ColorEntity colorEntity = new ColorEntity();
                     colorEntity.setIdColor(productoReciclableColor.getIdColor());
                     usuarioPuntos.setColorByIdColor(colorEntity);
                     usuarioPuntos = this.usuarioPuntosColorEntityRepository.save(usuarioPuntos);
+                    usuarioPuntosColorList.add(usuarioPuntos);
                 }
 
                 //guardamos el histórico de movimientos
@@ -613,6 +736,7 @@ public class ReciclajeServiceImpl implements ReciclajeService {
                 usuarioPuntosAcumulado.setColorByIdColor(productoReciclableColor.getColorByIdColor());
                 usuarioPuntosAcumulado.setProductoRecicladoByIdProductoReciclado(productoReciclado);
                 this.usuarioPuntosColorAcumuladoEntityRepository.save(usuarioPuntosAcumulado);
+                puntosAcumuladosList.add(usuarioPuntosAcumulado);
             }
         } else {
             log.info("El reciclaje no fue exitoso");
@@ -626,7 +750,13 @@ public class ReciclajeServiceImpl implements ReciclajeService {
             productoRecicladoQuioscoEntity.setIdQuiosco(idQuiosco);
             productoRecicladoQuioscoEntity = this.productoRecicladoQuioscoEntityRepository.save(productoRecicladoQuioscoEntity);
         }
-
+        var usuarioPuntosColor = this.usuarioPuntosColorEntityRepository.findByIdArqUsuario(usuario.getIdArqUsuario());
+        var quiosco = this.quioscoEntityRepository.findById(idQuiosco).orElse(new QuioscoEntity());
+        var evento = new EventoReciclaje(pais, productoRecicladoMapper.fromEntity(productoReciclado),
+                quioscoMapper.fromEntity(quiosco));
+        evento.getProductoReciclado().setUsuarioPuntosColorAcumulados(puntosAcumuladosList.stream().map(usuarioPuntosColorAcumuladoMapper::fromEntity).toList());
+        reciclajeEventProducer.send(evento);
+        actualizaPuntosEventoProducer.send(usuarioPuntosColor.orElseThrow(() -> new IllegalArgumentException("No se encontro los puntos")));
         return productoReciclado;
     }
 
@@ -752,10 +882,104 @@ public class ReciclajeServiceImpl implements ReciclajeService {
         return productoValido;
     }
 
+    @Override
+    @Transactional
+    public void reciclaProductoEnQuioscoPlc(Long idUsuario, List<Long> idsProducto, Long idQuiosco, Integer codigoRespuesta, Integer peso) {
+        log.info("Entrando a reciclaProductoEnQuioscoConPeso");
+        boolean productoValido = true;
+
+        ProductoRecicladoEntity productoReciclado = null;
+
+        for (Long id: idsProducto) {
+            var productoReciclableOptional = this.productoReciclableEntityRepository.findById(id);
+            if (productoReciclableOptional.isPresent()) {
+                var productoReciclable = productoReciclableOptional.get();
+                if (!Objects.equals(productoReciclable.getSku(), "NOT_FOUND") &&
+                        ((new BigDecimal(peso).compareTo(productoReciclable.getPesoMinimo()) < 0)
+                                || (new BigDecimal(peso).compareTo(productoReciclable.getPesoMaximo()) > 0))) {
+                    productoValido = false;
+                }
+                if ((new BigDecimal(peso).compareTo(productoReciclable.getPesoMinimo()) < 0)
+                        || (new BigDecimal(peso).compareTo(productoReciclable.getPesoMaximo()) > 0)) {
+                    productoValido = false;
+                }
+                log.info("Producto: {}. Peso recibido: {}. Rango de pesos: entre {} y {}. Es válido: {}. Código de respuesta RECICLAJE_EXITOSO: {}",
+                        productoReciclable.getSku(), peso, productoReciclable.getPesoMinimo(), productoReciclable.getPesoMaximo(), productoValido,
+                        codigoRespuesta.intValue() == CodigoRespuestaMaquinaEnum.RECICLAJE_EXITOSO.getCodigoRespuesta());
+
+                productoReciclado = this.guardarReciclaje(productoReciclable, idUsuario, idQuiosco, codigoRespuesta, productoValido);
+
+                PesoProductoRecicladoEntity pesoProducto = new PesoProductoRecicladoEntity();
+                pesoProducto.setProductoRecicladoByIdProductoReciclado(productoReciclado);
+                pesoProducto.setPeso(peso);
+                pesoProducto.setExitoso(productoValido);
+                pesoProducto = this.pesoProductoRecicladoEntityRepository.save(pesoProducto);
+
+                log.info("Termina guardado de reciclaje");
+                log.info("Saliendo de reciclaProductoEnQuioscoConPeso");
+            }
+        }
+    }
+
     private static Resource getTestFile(byte[] file) throws IOException {
         Path testFile = Files.createTempFile("test-file", ".txt");
         Files.write(testFile, file);
         return new FileSystemResource(testFile.toFile());
     }
 
+    @Override
+    public void cerrarQuiosco(Long idUsuarioLogeado, Long idQuiosco) {
+        QuioscoEntity quioscoEntity = this.quioscoEntityRepository.findById(idQuiosco)
+                .orElseThrow(() -> new IllegalArgumentException("No encontramos la máquina en nuestro catálogo. Intenta de nuevo."));
+        int tipoQuiosco = quioscoEntity.getTipoArduino() ? TipoPicEnum.ARDUINO.getTipoPic() : TipoPicEnum.PLC.getTipoPic();
+        /* INVOCA SERVICIO DE QUIOSCO PARA EMPEZAR A RECICLAR */
+        String ip = quioscoEntity.getIp();
+        String urlServerMaquina = "http://" + ip + ":8080";
+        String urlEndpoint = urlServerMaquina + environment.getProperty("maquina.service.url.cerrar");
+
+        var restTemplate = new RestTemplate();
+        try {
+            CerrarQuioscoDTO cerrarQuioscoDTO = new CerrarQuioscoDTO();
+            cerrarQuioscoDTO.setQuioscoId(idQuiosco);
+            cerrarQuioscoDTO.setUsuarioId(idUsuarioLogeado);
+            cerrarQuioscoDTO.setTipoPic(tipoQuiosco);
+            var headers = new HttpHeaders();
+            headers.set("Content-Type", "application/json");
+            var requestEntity = new HttpEntity<>(cerrarQuioscoDTO, headers);
+            restTemplate.postForObject(urlEndpoint, requestEntity, Void.class);
+        } catch (RestClientException e) {
+            log.error("Error al cerrar el quisco: {}", e.getMessage());
+            throw new IllegalArgumentException("No se pudo cerrar el quiosco. Intenta de nuevo.");
+        }
+
+        log.info("Termina cierre de quiosco");
+    }
+
+    @Override
+    public void abrirQuiosco(Long idQuiosco, Long idUsuarioLogueado) {
+        QuioscoEntity quioscoEntity = this.quioscoEntityRepository.findById(idQuiosco)
+                .orElseThrow(() -> new IllegalArgumentException("No encontramos la máquina en nuestro catálogo. Intenta de nuevo."));
+        int tipoQuiosco = quioscoEntity.getTipoArduino() ? TipoPicEnum.ARDUINO.getTipoPic() : TipoPicEnum.PLC.getTipoPic();
+        /* INVOCA SERVICIO DE QUIOSCO PARA EMPEZAR A RECICLAR */
+        String ip = quioscoEntity.getIp();
+        String urlServerMaquina = "http://" + ip + ":8080";
+        String urlEndpoint = urlServerMaquina + environment.getProperty("maquina.service.url.abrir");
+
+        var restTemplate = new RestTemplate();
+        try {
+            AbrirQuioscoDTO abrirQuioscoDTO = new AbrirQuioscoDTO();
+            abrirQuioscoDTO.setTipoPic(tipoQuiosco);
+            abrirQuioscoDTO.setQuioscoId(idQuiosco);
+            abrirQuioscoDTO.setUsuarioId(idUsuarioLogueado);
+            var headers = new HttpHeaders();
+            headers.set("Content-Type", "application/json");
+            var requestEntity = new HttpEntity<>(abrirQuioscoDTO, headers);
+            restTemplate.postForObject(urlEndpoint, requestEntity, Void.class);
+        } catch (RestClientException e) {
+            log.error("Error al abrir el quisco: {}", e.getMessage());
+            throw new IllegalArgumentException("No se pudo abrir el quiosco. Intenta de nuevo.");
+        }
+
+        log.info("Termina abrir de quiosco");
+    }
 }
