@@ -708,9 +708,9 @@ public class ReciclajeServiceImpl implements ReciclajeService {
                     if (productoValido) {
                         puntos = usuarioPuntos.getPuntos() + productoReciclableColor.getPuntos();
                     } else {
-                        //TODO: Para la prueba en OXXO comenté esta línea, para que siempre sumara puntos
-                        //puntos = usuarioPuntos.getPuntos();
-                        puntos = usuarioPuntos.getPuntos() + productoReciclableColor.getPuntos();
+                        //TODO: Para la prueba en OXXO comenté esta línea, para que siempre sumara puntos. Arreglar esto.
+                        puntos = usuarioPuntos.getPuntos();
+//                        puntos = usuarioPuntos.getPuntos() + productoReciclableColor.getPuntos();
                     }
                     log.info("El usuario {} se le dan {} puntos. Tenía antes: {}", usuario.getIdArqUsuario(), puntos, usuarioPuntos.getPuntos());
                     usuarioPuntos.setPuntos(puntos);
