@@ -70,8 +70,8 @@ public class UsuarioRestController {
     @PostMapping("/free/login")
     public ResponseEntity<JwtDTO> login(@Valid @RequestBody LoginUsuarioDTO loginUsuario) {
         log.info("Login. Usuario entrando: {}", loginUsuario.getNick());
-        JwtDTO jwtDTO = authService.login(loginUsuario);
-        return new ResponseEntity<>(jwtDTO, HttpStatus.OK);
+        JwtDTO jwtDTO = null;//authService.login(loginUsuario);
+        return new ResponseEntity<>(jwtDTO, HttpStatus.BAD_REQUEST);
     }
 
     @Operation(summary = "Valida si el usuario ya existe y esta pre-registrado en la aplicación. LISTO.")
@@ -115,9 +115,11 @@ public class UsuarioRestController {
     @PostMapping("/free/usuario")
     public ResponseEntity<MensajeDTO<?>> crearUsuario(@Valid @RequestBody NuevoUsuarioArquitecturaDTO user) {
         byte[] foto = HexFormat.of().parseHex("e04fd020ea3a6910a2d808002b30309d");
-        var mensaje = this.usuarioService.crearUsuario(user, foto, "Prueba");
-        return new ResponseEntity<>(mensaje, HttpStatus.OK);
-    }
+        var mensaje = new MensajeDTO<>().setData(null)
+                .setEstatus("400")
+                .setMensaje("Debe actualizar su aplicación.");//this.usuarioService.crearUsuario(user, foto, "Prueba");
+        return new ResponseEntity<>(mensaje, HttpStatus.BAD_REQUEST);
+    }//Enviar mensaje "Actualiza app" y devolver un 400.
     
     @PreAuthorize("isAuthenticated()")
     @Operation(summary = "Edita datos del usuario. LISTO.", description = "CUALQUIER ROL. Valores de estatus: true, false, error",

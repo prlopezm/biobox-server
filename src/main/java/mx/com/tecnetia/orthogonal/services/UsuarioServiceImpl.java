@@ -297,6 +297,10 @@ public class UsuarioServiceImpl implements UsuarioService {
 
 
     private MensajeDTO<?> existenIdentificadoresAlCrear(String nick, String email, String telefono) {
+        String[] forbiddenDomains = {"jio1.com", "linacit.com", "forcrack.com", "gufum.com", "nab4.com"};
+        Arrays.stream(forbiddenDomains).filter(domain -> email.toLowerCase().contains(domain)).forEach(domain -> {
+            throw new IllegalArgumentException("Esta dirección de correo electrónico contiene un dominio no permitido. Por favor, pruebe con otra.");
+        });
         if (this.arqUsuarioRepository.findByEmail(email).isPresent()) {
             throw new IllegalArgumentException("Esta dirección de correo electrónico ya está en uso. Por favor, pruebe con otra");
         } else if (this.arqUsuarioRepository.findByNick(nick).isPresent()) {
