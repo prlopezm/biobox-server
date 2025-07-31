@@ -751,12 +751,16 @@ public class ReciclajeServiceImpl implements ReciclajeService {
             productoRecicladoQuioscoEntity = this.productoRecicladoQuioscoEntityRepository.save(productoRecicladoQuioscoEntity);
         }
         var usuarioPuntosColor = this.usuarioPuntosColorEntityRepository.findByIdArqUsuario(usuario.getIdArqUsuario());
-        var quiosco = this.quioscoEntityRepository.findById(idQuiosco).orElse(new QuioscoEntity());
+        //Aquí Cassio creaba un quiosco, pero sin los parámetros, solo con el id
+        var quiosco = this.quioscoEntityRepository.findById(idQuiosco)
+                .orElseThrow(() -> new IllegalArgumentException("No se encontró el quiosco: " + idQuiosco));
         var evento = new EventoReciclaje(pais, productoRecicladoMapper.fromEntity(productoReciclado),
                 quioscoMapper.fromEntity(quiosco));
         evento.getProductoReciclado().setUsuarioPuntosColorAcumulados(puntosAcumuladosList.stream().map(usuarioPuntosColorAcumuladoMapper::fromEntity).toList());
         reciclajeEventProducer.send(evento);
-        actualizaPuntosEventoProducer.send(usuarioPuntosColor.orElseThrow(() -> new IllegalArgumentException("No se encontro los puntos")));
+        log.info("Se envió el evento de nuevo reciclaje: {}", evento);
+        actualizaPuntosEventoProducer.send(usuarioPuntosColor.orElseThrow(() -> new IllegalArgumentException("No se encontraron los puntos")));
+        log.info("Se envió el evento de actualización de puntos: {}", usuarioPuntosColor);
         return productoReciclado;
     }
 
