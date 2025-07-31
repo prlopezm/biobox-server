@@ -57,4 +57,10 @@ public class CuponerappUsadaEntity {
     @Column(name = "nombre", length = Integer.MAX_VALUE)
     private String nombre;
 
+    @Column(name = "fecha_vigencia", length = Integer.MAX_VALUE)
+    private String fechaVigencia;
+
+    @Column(name = "id_compra")
+    private Integer idCompra;
+
 }

@@ -6,6 +6,8 @@ import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.annotations.ColumnDefault;
 
+import java.sql.Timestamp;
+
 @Getter
 @Setter
 @Entity
@@ -40,5 +42,8 @@ public class CuponerappEntity {
 
     @Column(name = "idCompra")
     private Integer idCompra;
+
+    @Column(name = "fecha_vigencia")
+    private Timestamp fechaVigencia;
 
 }

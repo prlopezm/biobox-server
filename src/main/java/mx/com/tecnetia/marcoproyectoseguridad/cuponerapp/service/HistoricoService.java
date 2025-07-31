@@ -51,7 +51,8 @@ public class HistoricoService {
                         .setCodigoQr(u.getCodigoQr())
                         .setImagenBase64(u.getImagenBase64())
                         .setLlevaDetalle(true)
-                        .setTipo("CUPON"))
+                        .setTipo("CUPON")
+                        .setIdCompra(u.getIdCompra()))
                 .toList());
     }
 

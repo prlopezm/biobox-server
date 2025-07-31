@@ -10,14 +10,20 @@ import mx.com.tecnetia.marcoproyectoseguridad.cuponerapp.persistence.repository.
 import mx.com.tecnetia.marcoproyectoseguridad.cuponerapp.persistence.repository.CuponerappEntityRepository;
 import mx.com.tecnetia.marcoproyectoseguridad.cuponerapp.persistence.repository.CuponerappUsadaEntityRepository;
 import mx.com.tecnetia.marcoproyectoseguridad.persistence.hibernate.repository.UsuarioPuntosColorEntityRepository;
+import mx.com.tecnetia.marcoproyectoseguridad.util.Constantes;
+import mx.com.tecnetia.marcoproyectoseguridad.util.FormatosUtil;
 import mx.com.tecnetia.orthogonal.ampq.ActualizaPuntosEventoProducer;
+import mx.com.tecnetia.orthogonal.dto.MailDTO;
 import mx.com.tecnetia.orthogonal.services.UsuarioService;
+import mx.com.tecnetia.orthogonal.utils.email.EmailOperationsThymeleafService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.HashMap;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -34,6 +40,7 @@ public class CuponeraServiceImpl implements CuponeraService {
     private final UsuarioPuntosColorEntityRepository usuarioPuntosColorEntityRepository;
     private final CuponerappUsadaEntityRepository cuponerappUsadaEntityRepository;
     private final CuponerappCategoriaEstadoEntityRepository cuponerappCategoriaEstadoEntityRepository;
+    private final EmailOperationsThymeleafService emailOperationsThymeleafService;
 
     private final ActualizaPuntosEventoProducer actualizaPuntosEventoProducer;
 
@@ -57,9 +64,55 @@ public class CuponeraServiceImpl implements CuponeraService {
         var idUsuarioFirmado = this.usuarioService.getUsuarioLogeado()
                 .getIdArqUsuario();
         var puntosRestantes = descuentaPuntosCanje(idUsuarioFirmado, cupon.getPuntos());
+        enviarEmailConfirmacionCupon(this.usuarioService.getUsuarioLogeado().getEmail(),
+                cupon, respuestaCuponeraDTO);
         guardaHistorico(cupon, idUsuarioFirmado, respuestaCuponeraDTO);
         var msg = String.format("Se descontaron %1$d puntos. Te quedan %2$d puntos restantes", cupon.getPuntos(), puntosRestantes);
         return new RespuestaCuponCanjeadoDTO(msg, puntosRestantes);
+    }
+
+    private void enviarEmailConfirmacionCupon(String email, CuponerappEntity cupon, RespuestaCuponeraDTO respuestaCuponeraDTO) {
+        email = email.replace(" ", "").toLowerCase();
+        //email="@gmail.com";
+        log.info("enviarEmailConfirmacionCupon: " + email);
+
+        if (!FormatosUtil.direccionEmailValida(email)) {
+            throw new IllegalArgumentException("La dirección de correo no tiene un formato valido.");
+        }
+
+        try {
+            var mailDTO = getMailDTO(email, cupon, respuestaCuponeraDTO);
+            if(cupon.getIdCompra() == 2){
+                this.emailOperationsThymeleafService.sendEmail(mailDTO, Constantes.PLANTILLA_HTML_CONFIRMACION_CUPON_2);
+            }else{
+                this.emailOperationsThymeleafService.sendEmail(mailDTO, Constantes.PLANTILLA_HTML_CONFIRMACION_CUPON_1);
+            }
+            log.info("Email enviado correctamente");
+        } catch (Exception ex) {
+            log.error("Ocurrió un error al enviar el email de confirmacion de canje: {}", ex.getMessage());
+            ex.printStackTrace();
+            throw new IllegalArgumentException("Error al enviar correo de confirmacion de canje");
+        }
+    }
+
+    private MailDTO getMailDTO(String email, CuponerappEntity cupon, RespuestaCuponeraDTO respuestaCuponeraDTO) {
+        var model = new HashMap<String, Object>();
+        model.put("url_cupon", cupon.getUrl());
+        model.put("folio", respuestaCuponeraDTO.getFolio());
+        if(cupon.getIdCompra()!=2){
+            model.put("fecha_canje", respuestaCuponeraDTO.getFecha() + " " +
+                    (respuestaCuponeraDTO.getHora().contains("--") ? "" : respuestaCuponeraDTO.getHora()));
+        }
+        model.put("puntos", cupon.getPuntos());
+        model.put("promocion", cupon.getPromocion());
+        model.put("vigencia", new SimpleDateFormat("dd/MM/yy").format(cupon.getFechaVigencia()));
+        model.put("descripcion", cupon.getDescripcion());
+
+        var mailDTO = new MailDTO();
+        mailDTO.setMailTo(email);
+        mailDTO.setMailSubject("BioBox - Confirmacion de canje");
+        mailDTO.setModel(model);
+        return mailDTO;
     }
 
     @Override
@@ -120,7 +173,9 @@ public class CuponeraServiceImpl implements CuponeraService {
                 .setImagenBase64(respuestaCuponeraDTO.getImagenBase64())
                 .setFolio(respuestaCuponeraDTO.getFolio())
                 .setCosto(respuestaCuponeraDTO.getCosto())
-                .setNombre(respuestaCuponeraDTO.getNombre());
+                .setNombre(respuestaCuponeraDTO.getNombre())
+                .setFechaVigencia(cuponUsado.getFechaVigencia().toString())
+                .setIdCompra(cuponUsado.getIdCompra());
         this.cuponerappUsadaEntityRepository.save(ent);
     }
 }

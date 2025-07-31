@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 import mx.com.tecnetia.marcoproyectoseguridad.cuponerapp.persistence.entity.CuponerappCategoriaEstadoEntity;
 
 import java.io.Serializable;
+import java.text.SimpleDateFormat;
 
 
 @Data
@@ -23,6 +24,7 @@ public class CuponDTO implements Serializable {
     String descripcion;
     String url;
     Integer idCompra;
+    String fechaVigencia;
 
     public CuponDTO(CuponerappCategoriaEstadoEntity cuponerappCategoriaEstadoEntity) {
         this.promoId = cuponerappCategoriaEstadoEntity.getCuponerapp().getIdPromocion();
@@ -31,5 +33,6 @@ public class CuponDTO implements Serializable {
         this.descripcion = cuponerappCategoriaEstadoEntity.getCuponerapp().getDescripcion();
         this.url = cuponerappCategoriaEstadoEntity.getCuponerapp().getUrl();
         this.idCompra = cuponerappCategoriaEstadoEntity.getCuponerapp().getIdCompra();
+        this.fechaVigencia = (cuponerappCategoriaEstadoEntity.getCuponerapp().getFechaVigencia()!= null ? new SimpleDateFormat("dd/MM/yy").format(cuponerappCategoriaEstadoEntity.getCuponerapp().getFechaVigencia()) : "");
     }
 }

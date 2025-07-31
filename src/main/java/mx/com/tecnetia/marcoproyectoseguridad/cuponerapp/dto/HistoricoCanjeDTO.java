@@ -24,6 +24,7 @@ public class HistoricoCanjeDTO implements Comparable<HistoricoCanjeDTO>{
     private String imagenBase64;
     private Boolean llevaDetalle;
     private String tipo;
+    private Integer idCompra;
 
     @Override
     public int compareTo(HistoricoCanjeDTO o) {
